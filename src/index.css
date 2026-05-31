@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Custom Godot 4 UI Color Palette */
+  --color-godot-dark: #15171d;
+  --color-godot-panel: #20232a;
+  --color-godot-header: #1c1e24;
+  --color-godot-orange: #df7e26;
+  --color-godot-accent: #478cbf;
+  --color-godot-accent-hover: #5ba3da;
+  --color-godot-green: #3ca263;
+  --color-godot-red: #e05353;
+}
+
+body {
+  background-color: #15171d;
+  color: #eeeeee;
+  margin: 0;
+  min-height: 100vh;
+}
+
+@keyframes floatUp {
+  0% { transform: translate(-50%, 0) scale(0.8); opacity: 1; }
+  20% { transform: translate(-50%, -10px) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -40px) scale(1); opacity: 0; }
+}
+
+.animate-float-up {
+  animation: floatUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}

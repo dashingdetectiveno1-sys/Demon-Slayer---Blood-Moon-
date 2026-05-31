@@ -1,0 +1,6 @@
+{
+  "name": "Godot 3D Player Controller Simulator",
+  "description": "An interactive 3D playable sandbox testing WASD and mouse player movement, gravity, and sliding collisions in Godot 4.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
