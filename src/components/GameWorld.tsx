@@ -2862,44 +2862,52 @@ export const GameWorld: React.FC = () => {
          headRotY = Math.sin(time)*0.1;
       }
 
+      // Smooth pose transitions: frame-rate-independent tweens toward per-state targets so no state switch snaps
+      const poseTween = 1 - Math.exp(-14 * delta);
+      const poseTweenFast = 1 - Math.exp(-22 * delta);
+      (playerObj as any).walkAmp = THREE.MathUtils.lerp((playerObj as any).walkAmp ?? 0, wF, 1 - Math.exp(-8 * delta));
+      const wAmp = (playerObj as any).walkAmp;
+
       if (wF === 0 && !s.isAttacking && !s.isBlocking) {
           playerObj.torso.scale.set(1, 1 + Math.sin(time*2)*0.02, 1 + Math.sin(time*2)*0.02);
-          playerObj.lArm.rotation.z = 0.1 + Math.sin(time*2)*0.05;
-          playerObj.rArm.rotation.z = -0.1 - Math.sin(time*2)*0.05;
+          playerObj.lArm.rotation.z = THREE.MathUtils.lerp(playerObj.lArm.rotation.z, 0.1 + Math.sin(time*2)*0.05, poseTween);
+          playerObj.rArm.rotation.z = THREE.MathUtils.lerp(playerObj.rArm.rotation.z, -0.1 - Math.sin(time*2)*0.05, poseTween);
           playerObj.headG.rotation.y = THREE.MathUtils.lerp(playerObj.headG.rotation.y, headRotY, 5*delta);
           playerObj.headG.rotation.x = THREE.MathUtils.lerp(playerObj.headG.rotation.x, headRotX, 5*delta);
       } else {
           playerObj.torso.scale.set(1, 1, 1);
-          playerObj.lArm.rotation.z = 0;
-          playerObj.rArm.rotation.z = 0;
+          playerObj.lArm.rotation.z = THREE.MathUtils.lerp(playerObj.lArm.rotation.z, 0, poseTween);
+          playerObj.rArm.rotation.z = THREE.MathUtils.lerp(playerObj.rArm.rotation.z, 0, poseTween);
           playerObj.headG.rotation.y = THREE.MathUtils.lerp(playerObj.headG.rotation.y, headRotY * 0.5, 10*delta);
           playerObj.headG.rotation.x = THREE.MathUtils.lerp(playerObj.headG.rotation.x, headRotX * 0.5, 10*delta);
       }
 
       if (!s.isOnFloor) {
-          // Jumping / Falling animation
-          playerObj.lLeg.rotation.x = -Math.PI / 4;
-          playerObj.rLeg.rotation.x = -Math.PI / 4;
+          // Jumping / Falling animation (tweened so takeoff and landing don't snap)
+          playerObj.lLeg.rotation.x = THREE.MathUtils.lerp(playerObj.lLeg.rotation.x, -Math.PI / 4, poseTweenFast);
+          playerObj.rLeg.rotation.x = THREE.MathUtils.lerp(playerObj.rLeg.rotation.x, -Math.PI / 4, poseTweenFast);
           if (!s.isAttacking) {
-              playerObj.lArm.rotation.x = Math.PI / 6;
-              playerObj.rArm.rotation.x = Math.PI / 6;
-              playerObj.lArm.rotation.z = Math.PI / 8;
-              playerObj.rArm.rotation.z = -Math.PI / 8;
+              playerObj.lArm.rotation.x = THREE.MathUtils.lerp(playerObj.lArm.rotation.x, Math.PI / 6, poseTweenFast);
+              playerObj.rArm.rotation.x = THREE.MathUtils.lerp(playerObj.rArm.rotation.x, Math.PI / 6, poseTweenFast);
+              playerObj.lArm.rotation.z = THREE.MathUtils.lerp(playerObj.lArm.rotation.z, Math.PI / 8, poseTweenFast);
+              playerObj.rArm.rotation.z = THREE.MathUtils.lerp(playerObj.rArm.rotation.z, -Math.PI / 8, poseTweenFast);
           }
       } else {
-          playerObj.lLeg.rotation.x = Math.sin(time*15) * 0.8 * wF;
-          playerObj.rLeg.rotation.x = -Math.sin(time*15) * 0.8 * wF;
+          // Walk cycle: amplitude eases in/out (wAmp) and rotations tween toward the cycle so start/stop/land never snap
+          const legSwing = Math.sin(time*15) * 0.9 * wAmp;
+          playerObj.lLeg.rotation.x = THREE.MathUtils.lerp(playerObj.lLeg.rotation.x, legSwing, poseTweenFast);
+          playerObj.rLeg.rotation.x = THREE.MathUtils.lerp(playerObj.rLeg.rotation.x, -legSwing, poseTweenFast);
           if (!s.isAttacking) {
               if (s.isBlocking) {
-                  playerObj.rArm.rotation.x = Math.PI / 4;
-                  playerObj.rArm.rotation.z = Math.PI / 4;
-                  playerObj.lArm.rotation.x = Math.PI / 3;
-                  playerObj.lArm.rotation.z = -Math.PI / 4;
+                  playerObj.rArm.rotation.x = THREE.MathUtils.lerp(playerObj.rArm.rotation.x, Math.PI / 4, poseTweenFast);
+                  playerObj.rArm.rotation.z = THREE.MathUtils.lerp(playerObj.rArm.rotation.z, Math.PI / 4, poseTweenFast);
+                  playerObj.lArm.rotation.x = THREE.MathUtils.lerp(playerObj.lArm.rotation.x, Math.PI / 3, poseTweenFast);
+                  playerObj.lArm.rotation.z = THREE.MathUtils.lerp(playerObj.lArm.rotation.z, -Math.PI / 4, poseTweenFast);
               } else {
-                  playerObj.rArm.rotation.x = -Math.sin(time*15) * 0.6 * wF;
+                  playerObj.rArm.rotation.x = THREE.MathUtils.lerp(playerObj.rArm.rotation.x, -Math.sin(time*15) * 0.6 * wAmp, poseTweenFast);
               }
           }
-          playerObj.lArm.rotation.x = s.isBlocking ? Math.PI / 3 : Math.sin(time*15) * 0.6 * wF;
+          playerObj.lArm.rotation.x = THREE.MathUtils.lerp(playerObj.lArm.rotation.x, s.isBlocking ? Math.PI / 3 : Math.sin(time*15) * 0.6 * wAmp, poseTweenFast);
       }
 
       // Anime-style ninja sprint pose while dashing: forward lean, arms swept back, blurred fast leg cycle
@@ -3043,6 +3051,7 @@ export const GameWorld: React.FC = () => {
       }
 
       if (s.isAttacking) {
+          if (s.attackTimer === 0) (s as any).attackFromX = playerObj.rArm.rotation.x; // swing starts from the arm's live pose, not a hard-coded angle
           s.attackTimer += delta;
           const phase = Math.min(s.attackTimer / 0.25, 1.0);
           
@@ -3062,7 +3071,8 @@ export const GameWorld: React.FC = () => {
               // 3-hit combo visual
               if (s.attackPhase === 3) dmgMult = 1.5;
               const angleSwing = s.attackPhase % 2 === 0 ? Math.PI/2 : -Math.PI/2;
-              playerObj.rArm.rotation.x = THREE.MathUtils.lerp(Math.PI/1.5, angleSwing, phase);
+              const easeSwing = 1 - Math.pow(1 - phase, 3); // easeOutCubic: snappy wind-up, smooth follow-through
+              playerObj.rArm.rotation.x = THREE.MathUtils.lerp((s as any).attackFromX ?? Math.PI/1.5, angleSwing, easeSwing);
               playerObj.rArm.rotation.z = Math.sin(phase*Math.PI) * 0.5;
               
               if (s.attackTimer > 0.02) {
