@@ -220,7 +220,7 @@ const DIALOGUE_CHOICES: Record<string, {
         choices: [
             {
                 text: "🌀 Ask: The secret of Water Breathing",
-                reply: "Urokodaki taps your sternum with one finger. 'Water does not argue with the stone. It goes around it. When a demon swings, dash THROUGH it - Space, K, or the dash button. For a heartbeat you are untouchable, and your focus doubles. Flow, boy. Do not fight the river.'"
+                reply: "Urokodaki taps your sternum with one finger. 'Water does not argue with the stone. It goes around it. When a demon swings, dash THROUGH it - K, or the dash button. For a heartbeat you are untouchable, and your focus doubles. Flow, boy. Do not fight the river.'"
             },
             {
                 text: "🕸️ Ask: How do I break Rui's webs?",
@@ -406,7 +406,8 @@ export const GameWorld: React.FC = () => {
               hideMainQuests: hideMainQuests,
               showQuestTracker: showQuestTracker,
               openMapLabels: openMapLabels,
-              questsProgress: s.questsProgress
+              questsProgress: s.questsProgress,
+          dummyHits: s.dummyHits || 0
           }));
           setSaveToastVisible(true);
           setTimeout(() => {
@@ -3970,7 +3971,8 @@ export const GameWorld: React.FC = () => {
                   hideMainQuests: hideMainQuests,
                   showQuestTracker: showQuestTracker,
                   openMapLabels: openMapLabels,
-                  questsProgress: s.questsProgress
+                  questsProgress: s.questsProgress,
+              dummyHits: s.dummyHits || 0
               }));
           } catch(e) {}
       }
@@ -4482,7 +4484,8 @@ export const GameWorld: React.FC = () => {
               hideMainQuests: hideMainQuests,
               showQuestTracker: showQuestTracker,
               openMapLabels: openMapLabels,
-              questsProgress: s.questsProgress
+              questsProgress: s.questsProgress,
+          dummyHits: s.dummyHits || 0
           }));
       } catch(e) {}
 
@@ -4508,6 +4511,7 @@ export const GameWorld: React.FC = () => {
               s.rankIdx = data.rankIdx || 0;
               if (data.stats) s.stats = data.stats;
               if (data.tips) s.tips = data.tips;
+              s.dummyHits = data.dummyHits || 0;
               
               // Load saved achievements and purchases
               s.mon = data.mon !== undefined ? data.mon : 50;
@@ -4555,6 +4559,7 @@ export const GameWorld: React.FC = () => {
           s.rankIdx = 0;
           s.stats = { attacks: 0, dashes: 0, water: 0 };
           s.tips = { dash: false, water: false, fire: false };
+          s.dummyHits = 0;
           s.enemies = [];
           
           s.mon = 50;
@@ -5684,7 +5689,7 @@ export const GameWorld: React.FC = () => {
 
       {/* --- Tip Modal Overlay --- */}
       {tipModal !== null && gameState === 'playing' && (
-         <div className="absolute inset-x-4 top-24 md:inset-x-auto md:w-[400px] md:right-8 bg-black/80 backdrop-blur-xl border border-blue-500/50 p-6 rounded-xl shadow-[0_0_30px_rgba(0,100,255,0.2)] z-50 animate-in slide-in-from-right-10 rounded-tl-3xl rounded-br-3xl pointer-events-auto">
+         <div className="absolute inset-x-4 top-24 max-h-[calc(100vh-8rem)] overflow-y-auto md:inset-x-auto md:w-[400px] md:right-8 bg-black/80 backdrop-blur-xl border border-blue-500/50 p-6 rounded-xl shadow-[0_0_30px_rgba(0,100,255,0.2)] z-50 animate-in slide-in-from-right-10 rounded-tl-3xl rounded-br-3xl pointer-events-auto">
             <div className="flex items-center space-x-3 mb-4 border-b border-blue-500/30 pb-3">
                <Info className="text-blue-400 w-6 h-6" />
                <h3 className="font-mono text-blue-200 uppercase tracking-[0.2em] font-bold text-sm">Combat Tip</h3>
