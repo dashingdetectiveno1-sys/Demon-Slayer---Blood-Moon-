@@ -4251,11 +4251,11 @@ export const GameWorld: React.FC = () => {
           const currentSunset = s.envTime >= 16.5 && s.envTime < 19.5;
 
           if (s.envWeather === 'rain') {
-              if (scene.fog) (scene.fog as THREE.FogExp2).density = 0.046;
+              if (scene.fog) (scene.fog as THREE.FogExp2).density = 0.036;
               if (dirL) dirL.intensity = 0.4;
               if (ambL) ambL.intensity = 0.6;
           } else if (s.envWeather === 'snow') {
-              if (scene.fog) { (scene.fog as THREE.FogExp2).density = 0.052; scene.fog.color.setHex(0xeef5ff); scene.background = new THREE.Color(0xaaaaaa); }
+              if (scene.fog) { (scene.fog as THREE.FogExp2).density = 0.042; scene.fog.color.setHex(0xeef5ff); scene.background = new THREE.Color(0xaaaaaa); }
               if (dirL) dirL.intensity = 0.6;
               if (ambL) ambL.intensity = 0.8;
           } else {
@@ -4263,7 +4263,7 @@ export const GameWorld: React.FC = () => {
               let targetDirInt = 2.0;
               let targetAmbInt = 1.0;
               if (currentNight) {
-                  targetFog = 0.046; // creepy thicker night fog
+                  targetFog = 0.036; // creepy night fog, capped so the world never washes out on small screens
                   targetDirInt = 0.18; // moonlight
                   targetAmbInt = 0.22;
               } else if (currentSunset) {
