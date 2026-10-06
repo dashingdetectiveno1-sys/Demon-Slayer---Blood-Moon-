@@ -3385,6 +3385,14 @@ export const GameWorld: React.FC = () => {
               return;
           }
 
+          if (e.type === 'cocoon') {
+              // Sacred cocoons are inanimate soul anchors: they have no limbs in animParams,
+              // so the combat AI below would crash every frame it aggroed them. Keep them
+              // stationary, just tick their damage flash timer.
+              if (e.damageTimer > 0) e.damageTimer -= delta;
+              return;
+          }
+
           if (e.type === 'npc') {
               if (dToPlayer < nNearest) { nNearest = dToPlayer; s.nearestInteractableId = e.id; }
               
