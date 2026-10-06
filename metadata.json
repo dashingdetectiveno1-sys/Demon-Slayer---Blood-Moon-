@@ -1,6 +1,8 @@
 {
-  "name": "Godot 3D Player Controller Simulator",
-  "description": "An interactive 3D playable sandbox testing WASD and mouse player movement, gravity, and sliding collisions in Godot 4.",
+  "name": "Demon Slayer: Blood Moon",
+  "description": "An interactive 3D Demon Slayer action game: conquer Mount Natagumo, master breathing forms, and shatter Lower Moon Five's demon threads.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
