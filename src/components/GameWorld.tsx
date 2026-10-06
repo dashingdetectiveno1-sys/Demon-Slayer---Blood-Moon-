@@ -4193,7 +4193,7 @@ export const GameWorld: React.FC = () => {
           const headPos = new THREE.Vector3(s.position.x, s.position.y + 2.0, s.position.z);
           const camSeg = tCamPos.clone().sub(headPos);
           const camBox = new THREE.Box3();
-          const CAM_CLR = 0.5;
+          const CAM_CLR = 0.8;
           const camPointBlocked = (px: number, py: number, pz: number) => {
               camBox.set(new THREE.Vector3(px - CAM_CLR, py - CAM_CLR, pz - CAM_CLR), new THREE.Vector3(px + CAM_CLR, py + CAM_CLR, pz + CAM_CLR));
               return colliders.some(c => camBox.intersectsBox(c.box));
@@ -4255,7 +4255,34 @@ export const GameWorld: React.FC = () => {
           }
       }
 
-      camera.position.lerp(tCamPos, 6.0 * (delta > 0 ? delta : 0.016)); 
+      camera.position.lerp(tCamPos, 6.0 * (delta > 0 ? delta : 0.016));
+
+      // Hard post-lerp constraint: the lerp path itself can sweep the camera
+      // through geometry (fast target jumps after attack lunges), and a target-
+      // only clamp cannot pull an already-buried camera out. If the ACTUAL
+      // camera position is inside a collider, snap it along the head->camera
+      // segment to the last clear point immediately (no smoothing inside walls).
+      if (!s.activeCutscene) {
+          const headNow = new THREE.Vector3(s.position.x, s.position.y + 2.0, s.position.z);
+          const segNow = camera.position.clone().sub(headNow);
+          const segLen = segNow.length();
+          if (segLen > 0.001) {
+              const boxNow = new THREE.Box3();
+              const CLR2 = 0.8;
+              const blockedNow = (px: number, py: number, pz: number) => {
+                  boxNow.set(new THREE.Vector3(px - CLR2, py - CLR2, pz - CLR2), new THREE.Vector3(px + CLR2, py + CLR2, pz + CLR2));
+                  return colliders.some(c => boxNow.intersectsBox(c.box));
+              };
+              if (blockedNow(camera.position.x, camera.position.y, camera.position.z)) {
+                  let clearT = 0.15;
+                  for (let t = 0.15; t <= 1.0001; t += 0.05) {
+                      if (blockedNow(headNow.x + segNow.x * t, headNow.y + segNow.y * t, headNow.z + segNow.z * t)) break;
+                      clearT = t;
+                  }
+                  camera.position.copy(headNow).addScaledVector(segNow, Math.max(0.12, clearT - 0.05));
+              }
+          }
+      }
       
       // Breathtakingly smooth camera look rotation using our lerp target ref
       if (cameraLookTargetRef.current.lengthSq() === 0) {
