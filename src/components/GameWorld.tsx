@@ -4183,7 +4183,31 @@ export const GameWorld: React.FC = () => {
           s.shakeTrauma = Math.max(0, s.shakeTrauma - (delta > 0 ? delta : 0.016));
       }
       tCamPos.add(new THREE.Vector3(shakeOffsetX, shakeOffsetY, 0));
-      
+
+      // Camera obstruction clamp (gameplay only): never let a building, stall or
+      // tree sit between the player and the follow camera. The fixed (0,10,16)
+      // offset could come to rest inside a roof/wall and render a full black
+      // screen until reload. Sample the player-head -> camera segment against
+      // the world colliders and pull the camera in front of the first hit.
+      if (!s.activeCutscene) {
+          const headPos = new THREE.Vector3(s.position.x, s.position.y + 2.0, s.position.z);
+          const camSeg = tCamPos.clone().sub(headPos);
+          const camBox = new THREE.Box3();
+          const CAM_CLR = 0.5;
+          const camPointBlocked = (px: number, py: number, pz: number) => {
+              camBox.set(new THREE.Vector3(px - CAM_CLR, py - CAM_CLR, pz - CAM_CLR), new THREE.Vector3(px + CAM_CLR, py + CAM_CLR, pz + CAM_CLR));
+              return colliders.some(c => camBox.intersectsBox(c.box));
+          };
+          let hitT = -1;
+          for (let t = 0.3; t <= 1.0001; t += 0.05) {
+              if (camPointBlocked(headPos.x + camSeg.x * t, headPos.y + camSeg.y * t, headPos.z + camSeg.z * t)) { hitT = t; break; }
+          }
+          if (hitT > 0) {
+              const useT = Math.max(0.18, hitT - 0.08);
+              tCamPos.copy(headPos).addScaledVector(camSeg, useT);
+          }
+      }
+
       let tLook = s.position.clone().add(new THREE.Vector3(0, 2, 0));
       tLook.add(new THREE.Vector3(shakeOffsetX, shakeOffsetY, 0));
 
