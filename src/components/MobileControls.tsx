@@ -78,7 +78,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
     <div className="fixed inset-0 pointer-events-none z-50">
       
       {/* Left side: Joystick */}
-      <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 flex justify-start items-end pointer-events-auto origin-bottom-left">
+      <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 [@media(max-height:480px)]:bottom-3 [@media(max-height:480px)]:left-3 [@media(max-height:480px)]:scale-[0.7] flex justify-start items-end pointer-events-auto origin-bottom-left">
         <div 
           className="w-32 h-32 sm:w-40 sm:h-40 bg-black/20 border-2 border-white/20 rounded-full backdrop-blur-md shadow-xl flex items-center justify-center relative touch-none"
           ref={joystickRef}
@@ -97,7 +97,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
 
       {/* Right side: Action Cluster */}
       <div className="absolute bottom-6 right-6 sm:bottom-12 sm:right-12 pointer-events-none touch-none">
-        <div className="relative w-48 h-48 sm:w-60 sm:h-60 origin-bottom-right transform scale-90 sm:scale-100">
+        <div className="relative w-48 h-48 sm:w-60 sm:h-60 origin-bottom-right transform scale-90 sm:scale-100 [@media(max-height:480px)]:scale-[0.7]">
           
           {/* Dash (Top Left) */}
           <button

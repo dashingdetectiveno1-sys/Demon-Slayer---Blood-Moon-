@@ -111,98 +111,99 @@ const ComboCounter = ({ count }: { count: number }) => {
 
 const DIALOGUES: Record<string, DialogLine[]> = {
   master_need_training: [
-    { speaker: 'Master Urokodaki', text: 'Tanjiro. Look at the heavens. The Blood Moon is rising, painted red by cursed demonic energy.', mood: 'calm' },
-    { speaker: 'Master Urokodaki', text: 'Rui, a formidable Lower Moon spider demon, is orchestrating a cosmic ritual within the shrine at the forest core. If the Blood Moon reaches its zenith, he will consume the wisteria barriers and gain immunity to sunlight.', mood: 'urgent' },
-    { speaker: 'Master Urokodaki', text: 'To cross into the dense Bamboo Forest, you must first hone your posture. Strike the oak training dummy to your right 3 times. Focus on your Water Breathing!', mood: 'urgent' },
-    { speaker: 'You', text: 'Yes, Master! I will practice on the dummy and synchronize my breathing.', mood: 'serious' }
+    { speaker: 'Master Urokodaki', text: 'You felt it too. The moon swells red as a wound, and the wisteria at the gate is wilting under its light. Something on that mountain is feeding.', mood: 'calm' },
+    { speaker: 'Master Urokodaki', text: 'Three nights ago the threads came over the wall and took little Yae from her bed. No scream. No broken lock. Just one small sandal in the snow. She is seven years old, Tanjiro.', mood: 'urgent' },
+    { speaker: 'Master Urokodaki', text: 'Before I open that gate, show me the water still runs through you. Three clean strikes on the oak dummy. Breathe first. Move second.', mood: 'calm' },
+    { speaker: 'You', text: 'Yes, Master. Three strikes. Then I am going up that mountain to bring her home.', mood: 'serious' }
   ],
   villageIntro: [
-    { speaker: 'Master Urokodaki', text: 'Outstanding! Your posture is aligned and your Water Breathing flows like a clean mountain river. You are ready.', mood: 'calm' },
-    { speaker: 'Master Urokodaki', text: 'Go now. Slashing those spider webs and lower spawn is dangerous, but the village depends on you.', mood: 'urgent' },
-    { speaker: 'You', text: 'I will destroy the strings holding this village in fear. Total Concentration... Water Breathing!', mood: 'serious' }
+    { speaker: 'Master Urokodaki', text: 'Good. The water remembers you. Listen once more: the demon up there calls itself Rui. It does not simply eat people. It weaves them - winds their souls into silk and calls it a family.', mood: 'calm' },
+    { speaker: 'Master Urokodaki', text: 'Three sacred cocoons anchor its power in the forest depths. Cut them, and its skin becomes mortal. Leave them, and your blade slides off like rain off a roof.', mood: 'urgent' },
+    { speaker: 'You', text: 'Cut the cocoons. Free the souls. Bring Yae home. Total concentration... Water Breathing!', mood: 'serious' }
   ],
   caveIntro: [
-    { speaker: 'Narrator', text: 'Deep within Mt. Natagumo, a cavern drips with toxic venom. The air is thick with the scent of stagnant souls.', mood: 'sinister' },
-    { speaker: 'You', text: 'This must be the nest of the secondary weavers. I can feel the vibration of thousands of threads.', mood: 'serious' },
-    { speaker: 'Kasugai Crow', text: 'Caw! Watch the ceiling! They drop from above! Slice and move! Caw!', mood: 'urgent' }
+    { speaker: 'Narrator', text: 'The cavern exhales rot and old incense. Cocoons hang from the dark like fruit left too long on the branch. Some of them are still breathing.', mood: 'sinister' },
+    { speaker: 'Kasugai Crow', text: 'Caw! Two were still warm when I scouted! Cut the silk, not the soul! Gently! Caw!', mood: 'urgent' },
+    { speaker: 'You', text: 'Nobody turns to thread while I am still standing. Water Breathing - Tenth Form: Constant Flux!', mood: 'serious' }
   ],
   peakArrival: [
-    { speaker: 'Narrator', text: 'You reach the frozen peak. The Blood Moon is massive here, casting a blinding crimson glare.', mood: 'sinister' },
-    { speaker: 'You', text: 'The temperature is dropping... my breathing is becoming jagged. I must maintain total concentration!', mood: 'serious' },
-    { speaker: 'Master Urokodaki (Memory)', text: 'Tanjiro, even in the coldest peak, your spirit is a hearth. Stride forward!', mood: 'calm' }
+    { speaker: 'Narrator', text: 'The snow up here falls red. The Blood Moon hangs close enough to watch it pulse. At the summit, the shrine bells ring with no hands on the rope.', mood: 'sinister' },
+    { speaker: 'You', text: 'My breath comes out white and thin. Stay with me, Nezuko. One more climb. This mountain ends tonight.', mood: 'serious' },
+    { speaker: 'Master Urokodaki (Memory)', text: 'A blade is only iron, boy. The thing that cuts is the reason you refuse to stop. Remember that at the top.', mood: 'calm' }
   ],
   villager_1: [
-    { speaker: 'Aiko (Florist)', text: 'The air has grown incredibly freezing. The Blood Moon is bleeding into the sky. It is said its light drives demons into a frenzy!', mood: 'sad' },
-    { speaker: 'You', text: 'Stay inside near the wisteria flowers. You will be safe there.', mood: 'calm' }
+    { speaker: 'Aiko (Florist)', text: 'The wisteria has not wilted once in my lifetime, slayer. Not once. It started the night that child vanished. The flowers know what is up there.', mood: 'sad' },
+    { speaker: 'You', text: 'Keep the blooms alive, Aiko. However dim they burn, that purple keeps every door in this village shut to him.', mood: 'calm' }
   ],
   villager_2: [
-    { speaker: 'Saburo (Old Villager)', text: 'I survived a spider-demon raid under the last Crimson Moon. They drag their victims into cocoons in the Bamboo Forest to absorb their souls!', mood: 'sad' },
-    { speaker: 'You', text: 'I will liberate those souls tonight, Saburo. Trust my blade.', mood: 'serious' }
+    { speaker: 'Saburo (Old Villager)', text: 'I survived the last red moon, sixty years gone. They took my brother. Wound him in silk like thread on a spool. Some nights I still hear him in there, slayer. Still alive.', mood: 'sad' },
+    { speaker: 'You', text: 'Then tonight I cut every spool on that mountain. If your brother is in there, Saburo, he is coming home.', mood: 'serious' }
   ],
   villager_3: [
-    { speaker: 'Elder Zenzo (Monk)', text: 'Listen well, young slayer. The Spider Demon uses three Sacred Cocoons in the forest to deflect physical blows. Slice those cocoons first to shatter his defensive shield!', mood: 'calm' },
-    { speaker: 'You', text: 'Sacred Cocoons... I will seek them out in the depths of the forest.', mood: 'serious' }
+    { speaker: 'Elder Zenzo (Monk)', text: 'Three cocoons hang in the deep forest, fed by stolen souls. They are his shield, his larder, his family. Pity him if you must, young slayer. Pity the people inside them first.', mood: 'calm' },
+    { speaker: 'You', text: 'Three cocoons. I will find them all, Elder. Mark my blade.', mood: 'serious' }
   ],
   villager_4: [
-    { speaker: 'Kanao Tsuyuri', text: 'Tanjiro... when fighting, chain your hits. Press Attack continuously. The higher your strike combo, the higher your critical multiplier climbs.', mood: 'calm' },
-    { speaker: 'You', text: 'Flowing continuous strikes... I will keep moving and never break the momentum!', mood: 'excited' }
+    { speaker: 'Kanao Tsuyuri', text: 'Tanjiro. Chain your strikes - one breath, one flow, no pause between cuts. The longer the flow holds, the harder each cut lands. Rui will try to break your rhythm. Do not let him.', mood: 'calm' },
+    { speaker: 'You', text: 'One breath, unbroken. Watch me, Kanao.', mood: 'excited' }
   ],
   villager_5: [
-    { speaker: 'Miyako (Shrine Maiden)', text: 'The ancient shrine in the heart of the sacred mountains is desecrated. Only the fire of determination can burn away these toxic red threads.', mood: 'serious' },
-    { speaker: 'You', text: 'Then I shall burn them down with the Hinokami Kagura!', mood: 'excited' }
+    { speaker: 'Miyako (Shrine Maiden)', text: 'That shrine kept this mountain quiet for three hundred years. Now red threads choke the offering ropes and the bell rings backwards. Burn his webs out of my gods\' house, slayer. Please.', mood: 'serious' },
+    { speaker: 'You', text: 'By moonset, the only fire left on that mountain will be mine. I swear it on the Hinokami Kagura.', mood: 'excited' }
   ],
   slayer_1: [
-    { speaker: 'Guard Genya', text: 'Our barricades are sealed until Master Urokodaki approves of your stance. Prove your skills on the training dummy first!', mood: 'angry' }
+    { speaker: 'Guard Genya', text: 'Gates stay barred until Urokodaki-sama signs off on your stance. Rules keep corpses off my conscience. Three strikes on the dummy. Make them clean.', mood: 'angry' }
   ],
   slayer_2: [
-    { speaker: 'Guard Inosuke', text: 'Hah! My dual boar-blades are screaming! Slay some spider trash so we can celebrate!', mood: 'excited' }
+    { speaker: 'Guard Inosuke', text: 'HAH! Smell that? Spider stink! My blades are screaming for it! Carve up some bugs, slayer - first to a hundred kills buys the rice!', mood: 'excited' }
   ],
   slayer_3: [
-    { speaker: 'Guard Zenitsu', text: 'Eeeek! Did you hear that rustling in the Bamboo forest? What if a giant spider drinks my blood?! Please don\'t leave me alone!', mood: 'sad' }
+    { speaker: 'Guard Zenitsu', text: 'D-did you hear that? The bamboo just clicked. Like fingers. What if there is a spider the size of a HOUSE up there right now? You will protect me, right? Tanjiro? RIGHT?', mood: 'sad' }
   ],
   forestWin: [
-    { speaker: 'Kasugai Crow', text: 'Caw! Caw! Lower demons eradicated! But wait—the path splits! The cavern calls, and the peak awaits! Caw!', mood: 'urgent' },
-    { speaker: 'You', text: 'I will clear the cavern first to ensure no ambush comes from behind.', mood: 'serious' }
+    { speaker: 'Kasugai Crow', text: 'Caw! Forest spawn shredded! But the threads pull two ways - the cavern breathes below, the peak freezes above! Caw!', mood: 'urgent' },
+    { speaker: 'You', text: 'Cavern first. Nobody stays breathing silk while I climb past. Then the peak. Then Rui.', mood: 'serious' }
   ],
   caveWin: [
-    { speaker: 'Narrator', text: 'The cavern falls silent. The venomous mist dissipates, revealing the path to the summit.', mood: 'calm' },
-    { speaker: 'You', text: "Only the peak remains. I'm coming for you, Rui.", mood: 'serious' }
+    { speaker: 'Narrator', text: 'The last cocoon splits and its mist dissolves into nothing. From inside: cold air, old tears, and a lullaby finally, finally stopped.', mood: 'calm' },
+    { speaker: 'You', text: 'Rest now. All of you. One climb left. I am coming, Rui.', mood: 'serious' }
   ],
   bossIntro: [
-    { speaker: 'Rui (Spider Demon)', text: 'You dare disrupt my union with the Crimson Moon? My threads of fate are harder than steel. You are nothing but an insect entering a spider web.', mood: 'sinister' },
-    { speaker: 'You', text: 'The bond between me and my sister can never be severed by your webs! Total Concentration... Water Breathing!', mood: 'urgent' }
+    { speaker: 'Rui (Spider Demon)', text: 'You smell of warm hearths. Of someone waiting at home. I had that once. Now I spin it from the people of your village. Join my family, slayer. I will even love you.', mood: 'sinister' },
+    { speaker: 'You', text: 'Love is not something you wind around a spool, Rui. Let them go. All of them. Then we will talk about what you used to be.', mood: 'urgent' },
+    { speaker: 'Rui (Spider Demon)', text: 'Then I will pull your sister\'s face out of your heart and keep it in silk, where nothing rots and nothing ever leaves.', mood: 'sinister' }
   ],
   bossWin: [
-    { speaker: 'Rui (Spider Demon)', text: 'How could this be... My blood-forged threads... dissolved into ash. What was this warm feeling of fire...?', mood: 'sad' },
-    { speaker: 'You', text: 'May the next transit of your soul be filled with warmth and family.', mood: 'calm' },
-    { speaker: 'Kasugai Crow', text: 'Caw! Incredible victory! The Blood Moon fades! The Hashira salutes your courage! Caw!', mood: 'excited' }
+    { speaker: 'Rui (Spider Demon)', text: 'The threads... were never warm at all. I only wanted someone... to wait for me... when I came home.', mood: 'sad' },
+    { speaker: 'You', text: 'Then go where someone is waiting. The moon is setting, Rui. It is over.', mood: 'calm' },
+    { speaker: 'Kasugai Crow', text: 'Caw! Lower Moon Five, defeated! The Blood Moon sets! The Hashira will hear of this night! Caw!', mood: 'excited' }
   ]
 };
 
 const CUTSCENES: Record<string, { speaker: string; text: string; mood: string }[]> = {
   intro: [
-    { speaker: 'Narrator', text: 'For three hundred years, the Blood Moon remained quiet... Tonight, its red eye opens again, casting a cursed scarlet dye over Mount Natagumo.', mood: 'sinister' },
-    { speaker: 'Narrator', text: 'Rui, of the XII Demonic Moons, has begun a blasphemous ritual of harvest to capture wisteria roots, seeking immunity from daylight.', mood: 'sinister' },
-    { speaker: 'Master Urokodaki', text: 'Warm your breathing, Tanjiro. The barricades of Mount Natagumo are sealed. Only absolute fluid synchronization can pierce the crimson veil.', mood: 'calm' },
-    { speaker: 'You', text: 'The atmospheric scent... it resembles dried leaves and spiders. Master, I will prove my stance and put an end to this cycle.', mood: 'serious' }
+    { speaker: 'Narrator', text: 'Three nights ago, the threads came over the wall. No scream. No broken lock. Just an empty futon, and one small sandal in the snow.', mood: 'sinister' },
+    { speaker: 'Narrator', text: 'Her name is Yae. She is seven years old. Every night since, the moon has swollen redder, and the wisteria guarding this village has wilted another inch.', mood: 'sinister' },
+    { speaker: 'Master Urokodaki', text: 'I would not send any child of mine up that mountain on a red night. So I am asking you as your teacher, Tanjiro: end this before another house goes quiet.', mood: 'calm' },
+    { speaker: 'You', text: 'You do not have to ask, Master. I will cut every thread on Natagumo and carry her down myself. Warm my breathing - then open the gate.', mood: 'serious' }
   ],
   forestEntrance: [
-    { speaker: 'Guard Genya', text: 'Urokodaki-sama has authorized access! Stand back, raising the wooden village gates!', mood: 'urgent' },
-    { speaker: 'Narrator', text: 'Behind the gate lies the cold, silent columns of the Bamboo Forest. Watch your footsteps: each death here will cost 20 Mon coins.', mood: 'sinister' },
-    { speaker: 'You', text: 'Water Breathing - Fourth Form: Striking Tide! I will slice these spider webs into ashes!', mood: 'excited' }
+    { speaker: 'Guard Genya', text: 'Urokodaki\'s seal confirmed. Gates open! ...Listen, slayer. Past this point the trees stop whispering back. Fall here, and the mountain keeps twenty mon of your soul\'s weight. Move like water.', mood: 'urgent' },
+    { speaker: 'Narrator', text: 'The bamboo closes behind you like a held breath. Threads hang between the stalks - fine as silk, red as veins. Somewhere above, something is humming a lullaby.', mood: 'sinister' },
+    { speaker: 'You', text: 'Yae - if you can hear me, hold on. Water Breathing, Fourth Form: Striking Tide!', mood: 'excited' }
   ],
   caveEntrance: [
-    { speaker: 'Narrator', text: 'The mouth of the cavern looms like a giant beast. Stalactites drip with glowing purple venom.', mood: 'sinister' },
-    { speaker: 'You', text: 'Water Breathing - Tenth Form: Constant Flux! I will clear this darkness!', mood: 'serious' }
+    { speaker: 'Narrator', text: 'The cavern mouth breathes cold rot. Stalactites weep purple venom. The cocoons overhead sway, though there is no wind.', mood: 'sinister' },
+    { speaker: 'You', text: 'Steady. Breathe it in - the fear, the cold, all of it. Then let it out with the cut. Water Breathing, Tenth Form: Constant Flux!', mood: 'serious' }
   ],
   peakEntrance: [
-    { speaker: 'Narrator', text: 'The air turns to ice. Snowflakes are stained red by the moon\'s light.', mood: 'sinister' },
-    { speaker: 'You', text: 'My lungs... they burn. But my heart is fire! Hinokami Kagura!', mood: 'urgent' }
+    { speaker: 'Narrator', text: 'The snow falls red at the summit. The Blood Moon hangs so close you can watch it pulse. The shrine bells ring with no hands on the rope.', mood: 'sinister' },
+    { speaker: 'You', text: 'Lungs burning. Fingers numb. Good - that means I am still alive to feel them. Stay with me, Nezuko. Hinokami Kagura.', mood: 'urgent' }
   ],
   bossArrival: [
-    { speaker: 'Rui (Spider Demon)', text: 'Insolent child. You are too late. The moon reaches its peak, and my threads have locked you into my family domain.', mood: 'sinister' },
-    { speaker: 'You', text: 'Water cannot be woven, nor can it be captured! Hinokami Kagura – Clear Blue Sky!', mood: 'urgent' },
-    { speaker: 'Narrator', text: 'Rui\'s defenses are fueled by the Blood Moon! Watch out for his thread locks—use dash to slice or dodge them!', mood: 'urgent' }
+    { speaker: 'Rui (Spider Demon)', text: 'You climb well, for prey. But the moon is at its zenith, little slayer, and every thread on this mountain answers to me. You walked into my family\'s web the moment you loved something.', mood: 'sinister' },
+    { speaker: 'You', text: 'My family was never spun from stolen souls. Water cannot be woven, Rui - and it cannot be caught! Hinokami Kagura: Clear Blue Sky!', mood: 'urgent' },
+    { speaker: 'Narrator', text: 'The air turns to wire. Rui\'s defenses drink the moonlight - watch for his thread-locks and dash through the gaps!', mood: 'urgent' }
   ]
 };
 
@@ -215,19 +216,19 @@ const DIALOGUE_CHOICES: Record<string, {
     }[];
 }> = {
     master_need_training: {
-        question: "Select a training inquiry or resolve for Master Urokodaki:",
+        question: "Ask Master Urokodaki before the gate opens:",
         choices: [
             {
-                text: "🌀 Ask: Secrets of Water Breathing",
-                reply: "Urokodaki crosses his arms. 'Water is fluid yet absolute. When fighting, press Space / Dash button (or K on Keyboard) right through enemy swings! It triggers invincibility frames and rewards 2x focus counter. Flow like a stream, Tanjiro.'"
+                text: "🌀 Ask: The secret of Water Breathing",
+                reply: "Urokodaki taps your sternum with one finger. 'Water does not argue with the stone. It goes around it. When a demon swings, dash THROUGH it - Space, K, or the dash button. For a heartbeat you are untouchable, and your focus doubles. Flow, boy. Do not fight the river.'"
             },
             {
-                text: "🕸️ Ask: Secrets of Rui's defensive webs?",
-                reply: "'Rui's cage is protected by three mountain-woven Sacred Cocoons in the forest depths. Until you search for and slice all three cocoons, Rui remains invulnerable and absorbs your slashes. Use your minimap's glowing indicators to track their location!'"
+                text: "🕸️ Ask: How do I break Rui's webs?",
+                reply: "'Three sacred cocoons hang in the deep forest, woven from stolen souls. While even one holds, Rui's skin turns every blade. Your minimap glows where they hang. Cut all three - then his flesh remembers it can die.'"
             },
             {
-                text: "🦊 Request ancestral ward mask (+25 Max Stamina boost)",
-                reply: "Urokodaki places a hand on your shoulder. 'May the ancestral ward fox mask guide you in dark hours.' A pleasant spiritual warmth flows into your veins. Your maximum stamina has permanently increased by +25!",
+                text: "🦊 Request the ancestral ward mask (+25 Max Stamina)",
+                reply: "Urokodaki presses the old fox mask to your forehead. 'My students wore this before you. Some of them came home.' Warmth settles into your lungs. Maximum stamina permanently +25!",
                 effect: (s) => {
                     if (!s.urokodakiCharmGranted) {
                         s.maxStamina = (s.maxStamina || 100) + 25;
@@ -237,17 +238,17 @@ const DIALOGUE_CHOICES: Record<string, {
                 }
             },
             {
-                text: "🎯 'I am ready to begin postures!'",
-                reply: "'Outstanding. To lift the village bar gates, strike the oak training dummy to your right 3 times!'"
+                text: "🎯 'I am ready. Watch my postures.'",
+                reply: "'Then show me. Three strikes on the oak dummy to your right. Clean cuts, full breathing - and the gate opens.'"
             }
         ]
     },
     villageIntro: {
-        question: "Slayer vow choice:",
+        question: "One vow before the gate:",
         choices: [
             {
-                text: "🔥 Swear: Absolute protection of Nezuko (+15% Attack Boost)",
-                reply: "Your eyes flash with Hinokami sun flames, 'I will never allow anyone to hurt Nezuko!' The spiritual resolve has permanently increased your basic slash damage multiplier by +15%!",
+                text: "🔥 Swear: Protect Nezuko, whatever it costs (+15% Attack)",
+                reply: "You bow until your forehead touches the snow. 'Nezuko gave up everything she was. I can give this mountain one night.' Heat flickers along your blade - slash damage permanently +15%!",
                 effect: (s) => {
                     if (!s.nezukoVowGranted) {
                         s.slashDamageMult = (s.slashDamageMult || 1.0) + 0.15;
@@ -256,25 +257,25 @@ const DIALOGUE_CHOICES: Record<string, {
                 }
             },
             {
-                text: "📜 Ask: Teach me about the Slayer Ranks",
-                reply: "'The ranks climb: Mizunoto ➔ Mizunoe ➔ Kanoto ➔ Kanoe ➔ Tsuchinoto ➔ Tsuchinoe ➔ Hinoto ➔ Hinoe ➔ Kinoto ➔ Kinoe. At the peak sit the legendary Hashira Pillars! Keep slaying demons to raise your level & rank!'"
+                text: "📜 Ask: Teach me the Slayer Ranks",
+                reply: "'Mizunoto, Mizunoe, Kanoto... ten steps to the Hashira. You stand on the first stair, barefoot in the snow. Climb. Every demon you cut down is a step.'"
             },
             {
-                text: "⚔️ 'Unseal the gate! I am ready!'",
-                reply: "'The wisteria gate barrier has been lifted. Step into the cold column of the Bamboo Forest, Mizunoto slayer. May focus protect your soul!'"
+                text: "⚔️ 'Unseal the gate. I am ready.'",
+                reply: "'The wisteria barrier is lifted. The bamboo forest is old, cold, and hungry. Go, Mizunoto. Come back with that child - or do not come back at all.'"
             }
         ]
     },
     villager_3: {
-        question: "Discuss the Spider Cocoons:",
+        question: "Elder Zenzo, on the sacred cocoons:",
         choices: [
             {
-                text: "🏮 Ask about Cocoon vulnerabilities",
-                reply: "Elder Monk Zenzo whispers: 'They are soft but contain terrible toxic mist. Strike them with a Water Wheel (Skill 1) to destroy them safely from a distance, or perform standard hits!'"
+                text: "🏮 Ask: How do I cut a cocoon safely?",
+                reply: "Zenzo leans close. 'They burst with poison mist if you cut them point-blank. Strike from a breath away - your Water Wheel (Skill 1) tears them open from range. Or be stubborn and bathe in the mist. Monks make few rules. That is one.'"
             },
             {
-                text: "💰 Beg for support coins (+25 Mon reward)",
-                reply: "The monk smiles kindly and hands you a handful of copper coins. 'Take these, young slayer. Purchase dynamic ramen from Teuchi's food stall!' You received 25 Mon coins!",
+                text: "💰 Accept his offering (+25 Mon)",
+                reply: "The old monk presses warm copper into your palm. 'Teuchi's ramen stall, when you come back down. Eat hot food. The dead envy the living most for that.' +25 Mon!",
                 effect: (s) => {
                     if (!s.monkCoinsGranted) {
                         s.mon = (s.mon || 0) + 25;
@@ -318,6 +319,38 @@ export const GameWorld: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuTab, setMenuTab] = useState<'lore' | 'combat' | 'breathing'>('lore');
   const [moonHovered, setMoonHovered] = useState(false);
+  const [cutsceneChars, setCutsceneChars] = useState(0);
+
+  // Typewriter reveal for cutscene lines: resets per line, ~2 chars/24ms
+  useEffect(() => {
+      if (!cutsceneId) return;
+      setCutsceneChars(0);
+      const full = (CUTSCENES[cutsceneId] || [])[cutsceneLineIdx]?.text || '';
+      const iv = setInterval(() => {
+          setCutsceneChars(prev => {
+              if (prev >= full.length) { clearInterval(iv); return prev; }
+              return prev + 2;
+          });
+      }, 24);
+      return () => clearInterval(iv);
+  }, [cutsceneId, cutsceneLineIdx]);
+
+  const [dialogChars, setDialogChars] = useState(0);
+  // Typewriter reveal for NPC dialog lines and choice replies
+  useEffect(() => {
+      if (!dialogId) return;
+      setDialogChars(0);
+      const isSl = dialogId.toLowerCase().includes('slayer');
+      const arr = DIALOGUES[dialogId] || [{ speaker: isSl ? 'Demon Slayer Guard' : 'Villager', text: isSl ? 'Maintain total concentration! Forest demons have been very active lately.' : 'Thank goodness we have the Demon Slayer Corps protecting our humble village!', mood: isSl ? 'urgent' : 'calm' }];
+      const full = selectedChoiceReply ?? (arr[dialogLineIdx]?.text || '');
+      const iv = setInterval(() => {
+          setDialogChars(prev => {
+              if (prev >= full.length) { clearInterval(iv); return prev; }
+              return prev + 2;
+          });
+      }, 24);
+      return () => clearInterval(iv);
+  }, [dialogId, dialogLineIdx, selectedChoiceReply]);
   
   // Environment Settings
   const [envTime, setEnvTime] = useState<number>(12); // 0 to 24 (12 = noon)
@@ -698,15 +731,20 @@ export const GameWorld: React.FC = () => {
         },
         vertexShader: `
             uniform float uSize;
+            varying float vFade;
             void main() {
                 vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                gl_PointSize = uSize * (20.0 / -mvPosition.z);
+                float dist = max(-mvPosition.z, 0.001);
+                // Clamp point size and fade particles near the camera - an unclamped point at the near plane balloons to fill the whole screen
+                gl_PointSize = clamp(uSize * (20.0 / dist), 0.0, 48.0);
+                vFade = smoothstep(0.8, 4.0, dist);
                 gl_Position = projectionMatrix * mvPosition;
             }
         `,
         fragmentShader: `
             uniform vec3 uColor;
             uniform float uIsRain;
+            varying float vFade;
             void main() {
                 vec2 pt = gl_PointCoord - vec2(0.5);
                 float dist = length(pt);
@@ -714,7 +752,7 @@ export const GameWorld: React.FC = () => {
                 float d = mix(dist, rainDist, uIsRain);
                 if (d > 0.5) discard;
                 float alpha = 1.0 - (d * 2.0);
-                gl_FragColor = vec4(uColor, alpha * (1.0 - uIsRain * 0.4)); // rain slightly more transparent
+                gl_FragColor = vec4(uColor, alpha * (1.0 - uIsRain * 0.4) * vFade); // rain slightly more transparent
             }
         `,
         transparent: true,
@@ -4489,6 +4527,9 @@ export const GameWorld: React.FC = () => {
       
       const hasChoices = dialogId ? DIALOGUE_CHOICES[dialogId] : null;
 
+      const curText = selectedChoiceReply ?? (diagArr[dialogLineIdx]?.text || '');
+      if (dialogChars < curText.length) { setDialogChars(curText.length); return; }
+
       if (dialogLineIdx >= diagArr.length - 1) {
           if (hasChoices && selectedChoiceReply === null) {
               // Wait for user to select a choice
@@ -4559,6 +4600,8 @@ export const GameWorld: React.FC = () => {
 
   const advanceCutscene = () => {
       const diagArr = CUTSCENES[cutsceneId!] || [];
+      const curLine = diagArr[cutsceneLineIdx];
+      if (curLine && cutsceneChars < curLine.text.length) { setCutsceneChars(curLine.text.length); return; }
       if (cutsceneLineIdx >= diagArr.length - 1) {
           const finishedId = cutsceneId;
           setCutsceneId(null);
@@ -4602,7 +4645,7 @@ export const GameWorld: React.FC = () => {
       )}
 
       {gameState === 'menu' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#030303] z-50 overflow-hidden select-none">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#030303] z-50 overflow-y-auto select-none">
             {/* Immersive Dark Crimson Background Gradients */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#1d0606] via-[#050101] to-[#020202]" />
             
@@ -4657,7 +4700,7 @@ export const GameWorld: React.FC = () => {
             })}
 
             {/* Main Interactive Dual-Pane container */}
-            <div className="w-full max-w-7xl mx-auto px-6 h-full flex flex-col justify-between py-12 relative z-10">
+            <div className="w-full max-w-7xl mx-auto px-6 min-h-full flex flex-col justify-between py-6 sm:py-12 relative z-10">
                 
                 {/* TOP HEADER: Traditional Hanko Branded Signature & Mount Natagumo Arc Marker */}
                 <div className="flex items-center justify-between w-full border-b border-white/5 pb-4">
@@ -5221,7 +5264,7 @@ export const GameWorld: React.FC = () => {
       {gameState === 'playing' && cutsceneId === null && (
         <div className="absolute top-4 left-4 md:top-6 md:left-6 right-4 flex justify-between pointer-events-none z-20">
             {/* Player Stats Corner */}
-            <div className="w-full max-w-[220px] sm:max-w-sm">
+            <div className="w-full max-w-[220px] sm:max-w-sm [@media(max-height:480px)]:max-w-[180px]">
                 <div className="flex items-center space-x-3 mb-2">
                     <div className="w-9 h-9 sm:w-12 sm:h-12 bg-black/60 border border-white/20 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md">
                         <span className="text-xl font-bold font-mono text-white">{level}</span>
@@ -5258,7 +5301,7 @@ export const GameWorld: React.FC = () => {
                   <motion.div 
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="mt-4 bg-amber-950/20 border border-amber-500/30 p-2.5 sm:p-3.5 rounded-xl flex items-start gap-2.5 sm:gap-3 backdrop-blur-md max-w-[220px] sm:max-w-sm pointer-events-auto group/quest"
+                    className="mt-4 [@media(max-height:480px)]:mt-2 bg-amber-950/20 border border-amber-500/30 p-2.5 sm:p-3.5 [@media(max-height:480px)]:p-2 rounded-xl flex items-start gap-2.5 sm:gap-3 backdrop-blur-md max-w-[220px] sm:max-w-sm [@media(max-height:480px)]:max-w-[180px] pointer-events-auto group/quest"
                   >
                     <Star className="text-amber-500 w-5 h-5 animate-pulse shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -5272,7 +5315,7 @@ export const GameWorld: React.FC = () => {
                           <X className="w-3 h-3" />
                         </button>
                       </div>
-                      <p className="text-xs text-gray-300 font-sans leading-relaxed">
+                      <p className="text-xs text-gray-300 font-sans leading-relaxed [@media(max-height:480px)]:hidden">
                         Strike the oak dummy with your steel <span className="font-bold text-amber-400">3 times</span> to prove your Water stance to Master Urokodaki.
                       </p>
                       <div className="flex items-center gap-2 mt-2">
@@ -5294,7 +5337,7 @@ export const GameWorld: React.FC = () => {
                   <motion.div 
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="mt-4 bg-emerald-950/20 border border-emerald-500/30 p-2.5 sm:p-3.5 rounded-xl flex items-start gap-2.5 sm:gap-3 backdrop-blur-md max-w-[220px] sm:max-w-sm pointer-events-auto group/quest"
+                    className="mt-4 [@media(max-height:480px)]:mt-2 bg-emerald-950/20 border border-emerald-500/30 p-2.5 sm:p-3.5 [@media(max-height:480px)]:p-2 rounded-xl flex items-start gap-2.5 sm:gap-3 backdrop-blur-md max-w-[220px] sm:max-w-sm [@media(max-height:480px)]:max-w-[180px] pointer-events-auto group/quest"
                   >
                     <CheckCircle2 className="text-emerald-500 w-5 h-5 animate-pulse shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -5308,7 +5351,7 @@ export const GameWorld: React.FC = () => {
                           <X className="w-3 h-3" />
                         </button>
                       </div>
-                      <p className="text-xs text-gray-300 font-sans leading-relaxed">
+                      <p className="text-xs text-gray-300 font-sans leading-relaxed [@media(max-height:480px)]:hidden">
                         Speak to <span className="font-bold text-white">Master Urokodaki</span> to lift the village barrier and cross into the Bamboo Forest.
                       </p>
                     </div>
@@ -5685,7 +5728,7 @@ export const GameWorld: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`text-base md:text-lg lg:text-xl text-neutral-200 font-sans tracking-wide leading-relaxed font-light ${textGlow}`}>
-                        {step.text}
+                        {step.text.slice(0, cutsceneChars)}{cutsceneChars < step.text.length ? '▍' : ''}
                       </p>
                     </div>
                   </div>
@@ -5741,16 +5784,16 @@ export const GameWorld: React.FC = () => {
                  </h3>
                  {selectedChoiceReply ? (
                      <p className="text-base md:text-xl text-amber-200 font-sans leading-relaxed tracking-wide min-h-[3rem] select-none text-gray-205 italic">
-                       "{selectedChoiceReply}"
+                       "{selectedChoiceReply.slice(0, dialogChars)}{dialogChars < selectedChoiceReply.length ? '▍' : ''}"
                      </p>
                  ) : (
                      <p className="text-base md:text-xl text-gray-100 font-sans leading-relaxed tracking-wide min-h-[3rem] select-none text-gray-205">
-                       {line.text}
+                       {line.text.slice(0, dialogChars)}{dialogChars < line.text.length ? '▍' : ''}
                      </p>
                  )}
                  
                  {/* Display Choices if at last line of dialog and no choice made yet */}
-                 {dialogId && DIALOGUE_CHOICES[dialogId] && dialogLineIdx >= (DIALOGUES[dialogId]?.length || 0) - 1 && selectedChoiceReply === null && (
+                 {dialogId && DIALOGUE_CHOICES[dialogId] && dialogLineIdx >= (DIALOGUES[dialogId]?.length || 0) - 1 && selectedChoiceReply === null && dialogChars >= line.text.length && (
                      <div className="mt-6 flex flex-col space-y-3" onClick={e => e.stopPropagation()}>
                          <p className="font-mono text-xs text-amber-500/70 uppercase tracking-widest mb-2 border-b border-white/5 pb-1 inline-block">
                              {DIALOGUE_CHOICES[dialogId].question}
