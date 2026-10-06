@@ -5372,7 +5372,7 @@ export const GameWorld: React.FC = () => {
                 )}
 
                 {/* --- Quest Tracker Toggle --- */}
-                <div className="mt-4 pointer-events-auto flex flex-col gap-2">
+                <div className="mt-4 pointer-events-auto flex flex-col gap-2 [@media(max-height:480px)]:fixed [@media(max-height:480px)]:left-1/2 [@media(max-height:480px)]:-translate-x-1/2 [@media(max-height:480px)]:bottom-2 [@media(max-height:480px)]:mt-0 [@media(max-height:480px)]:z-30">
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={() => setShowQuestTracker(!showQuestTracker)}
