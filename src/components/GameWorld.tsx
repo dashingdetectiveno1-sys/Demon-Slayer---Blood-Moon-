@@ -2854,6 +2854,19 @@ export const GameWorld: React.FC = () => {
       getPBox(s.position.x, s.position.y, s.position.z + moveDelta.z);
       if (!checkCol(playerBox)) s.position.z += moveDelta.z; else s.velocity.z = 0;
 
+      // World boundary: soft radial wall around the stage so the player can never walk
+      // out of the playable area into empty sky/fog (content lives within ~90m of origin,
+      // ground plane spans +/-150m). Slides along the wall instead of hard-stopping.
+      const WORLD_R = 98;
+      const pDistXZ = Math.sqrt(s.position.x * s.position.x + s.position.z * s.position.z);
+      if (pDistXZ > WORLD_R) {
+          const invR = WORLD_R / pDistXZ;
+          s.position.x *= invR; s.position.z *= invR;
+          const bnx = s.position.x / WORLD_R; const bnz = s.position.z / WORLD_R;
+          const vOut = s.velocity.x * bnx + s.velocity.z * bnz;
+          if (vOut > 0) { s.velocity.x -= bnx * vOut; s.velocity.z -= bnz * vOut; }
+      }
+
       s.position.y += moveDelta.y;
       if (s.position.y <= 0) {
           s.position.y=0;
