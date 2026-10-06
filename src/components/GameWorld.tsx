@@ -344,7 +344,7 @@ export const GameWorld: React.FC = () => {
   const [mon, setMon] = useState<number>(50);
   const [activeShop, setActiveShop] = useState<string | null>(null);
   const [saveToastVisible, setSaveToastVisible] = useState(false);
-  const [showQuestTracker, setShowQuestTracker] = useState(true);
+  const [showQuestTracker, setShowQuestTracker] = useState(() => !(('ontouchstart' in window) || navigator.maxTouchPoints > 0));
   const [acceptedQuests, setAcceptedQuests] = useState<string[]>([]);
 
   const saveGameData = () => {
@@ -929,6 +929,21 @@ export const GameWorld: React.FC = () => {
  
       const torso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), haoriMat);
       torso.position.y = 0.8; torso.castShadow = true; g.add(torso);
+ 
+      // Demon Slayer Corps uniform details: white belt, collar trim, gold buttons
+      const belt = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.09, 0.42), new THREE.MeshStandardMaterial({color: 0xf5f5f5, roughness: 0.85}));
+      belt.position.y = 0.44; g.add(belt);
+      const collarMat = new THREE.MeshStandardMaterial({color: 0xf5f5f5, roughness: 0.85});
+      const lCollar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.05), collarMat);
+      lCollar.position.set(-0.14, 1.2, 0.19); lCollar.rotation.z = 0.5; g.add(lCollar);
+      const rCollar = lCollar.clone(); rCollar.position.x = 0.14; rCollar.rotation.z = -0.5; g.add(rCollar);
+      const buttonMat = new THREE.MeshStandardMaterial({color: 0xd4af37, metalness: 0.9, roughness: 0.25});
+      for (let bi = 0; bi < 3; bi++) {
+          const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.02, 8), buttonMat);
+          btn.rotation.x = Math.PI / 2;
+          btn.position.set(0, 1.05 - bi * 0.18, 0.21);
+          g.add(btn);
+      }
  
       const lArm = buildRealisticLimb(0.2, 0.7, 0x187A4F, true); lArm.pivot.position.set(-0.4, 1.1, 0); g.add(lArm.pivot);
       const rArm = buildRealisticLimb(0.2, 0.7, 0x187A4F, true); rArm.pivot.position.set(0.4, 1.1, 0); g.add(rArm.pivot);
@@ -2802,7 +2817,15 @@ export const GameWorld: React.FC = () => {
       if (!checkCol(playerBox)) s.position.z += moveDelta.z; else s.velocity.z = 0;
 
       s.position.y += moveDelta.y;
-      if (s.position.y <= 0) { s.position.y=0; s.velocity.y=0; s.isOnFloor=true; } else { s.isOnFloor=false; }
+      if (s.position.y <= 0) {
+          s.position.y=0;
+          // Anime landing dust burst on hard touchdowns
+          if (!s.isOnFloor && s.velocity.y < -8) {
+              spawnParticles(s.position.clone(), 0xcbbba0, 14, 'wind');
+              s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.15);
+          }
+          s.velocity.y=0; s.isOnFloor=true;
+      } else { s.isOnFloor=false; }
 
       // Update Player Mesh
       playerObj.group.position.copy(s.position);
@@ -2877,6 +2900,19 @@ export const GameWorld: React.FC = () => {
               }
           }
           playerObj.lArm.rotation.x = s.isBlocking ? Math.PI / 3 : Math.sin(time*15) * 0.6 * wF;
+      }
+
+      // Anime-style ninja sprint pose while dashing: forward lean, arms swept back, blurred fast leg cycle
+      if (s.isDashing) {
+          playerObj.group.rotation.x = THREE.MathUtils.lerp(playerObj.group.rotation.x, 0.32, 14 * delta);
+          playerObj.lArm.rotation.x = THREE.MathUtils.lerp(playerObj.lArm.rotation.x, -Math.PI / 1.8, 16 * delta);
+          playerObj.rArm.rotation.x = THREE.MathUtils.lerp(playerObj.rArm.rotation.x, -Math.PI / 1.8, 16 * delta);
+          playerObj.lArm.rotation.z = THREE.MathUtils.lerp(playerObj.lArm.rotation.z, 0.35, 16 * delta);
+          playerObj.rArm.rotation.z = THREE.MathUtils.lerp(playerObj.rArm.rotation.z, -0.35, 16 * delta);
+          playerObj.lLeg.rotation.x = Math.sin(time*30) * 1.1;
+          playerObj.rLeg.rotation.x = -Math.sin(time*30) * 1.1;
+      } else if (!s.isAttacking && s.isOnFloor) {
+          playerObj.group.rotation.x = THREE.MathUtils.lerp(playerObj.group.rotation.x, 0, 10 * delta);
       }
 
       // 1. Dynamic Haori/Kimono cape physics flapping
@@ -3181,6 +3217,13 @@ export const GameWorld: React.FC = () => {
                         
                         e.velocity.add(e.group.position.clone().sub(s.position).normalize().multiplyScalar(knockback));
                         spawnParticles(e.group.position, 0xff0000, 20, 'blood');
+                        // Anime impact flash: white burst at chest height
+                        spawnParticles(e.group.position.clone().add(new THREE.Vector3(0, 1.2, 0)), 0xffffff, 8, 'wind');
+                        if (s.attackType === 'normal' && s.attackPhase === 3) {
+                            // Combo finisher: extra burst and rumble
+                            spawnParticles(e.group.position.clone().add(new THREE.Vector3(0, 1.0, 0)), 0xfff2cc, 14, 'wind');
+                            s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.25);
+                        }
                         if (s.attackType === 'water') {
                             spawnParticles(e.group.position, 0x0088ff, 15, 'water');
                         } else if (s.attackType === 'fire') {
@@ -4853,7 +4896,7 @@ export const GameWorld: React.FC = () => {
                                 {[
                                   { id: 'lore', label: 'THE EPISODE LORE', icon: BookOpen },
                                   { id: 'combat', label: 'COMBAT DRILLS', icon: Compass },
-                                  { id: 'breathing', label: 'BREATHING MANU', icon: Flame }
+                                  { id: 'breathing', label: 'BREATHING MANUAL', icon: Flame }
                                 ].map(tab => {
                                   const IconComponent = tab.icon;
                                   const isActive = menuTab === tab.id;
@@ -5168,9 +5211,9 @@ export const GameWorld: React.FC = () => {
       {gameState === 'playing' && cutsceneId === null && (
         <div className="absolute top-4 left-4 md:top-6 md:left-6 right-4 flex justify-between pointer-events-none z-20">
             {/* Player Stats Corner */}
-            <div className="w-full max-w-sm">
+            <div className="w-full max-w-[220px] sm:max-w-sm">
                 <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-12 h-12 bg-black/60 border border-white/20 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md">
+                    <div className="w-9 h-9 sm:w-12 sm:h-12 bg-black/60 border border-white/20 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md">
                         <span className="text-xl font-bold font-mono text-white">{level}</span>
                     </div>
                     <div>
@@ -5179,7 +5222,7 @@ export const GameWorld: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-black/40 border border-white/10 p-4 rounded-xl backdrop-blur-md shadow-xl">
+                <div className="bg-black/40 border border-white/10 p-2.5 sm:p-4 rounded-xl backdrop-blur-md shadow-xl">
                     <div className="mb-3">
                         <div className="flex justify-between text-[10px] font-bold font-mono tracking-widest text-[#ff4444] mb-1">
                             <span className="flex items-center"><Heart className="w-3 h-3 mr-1"/> VITALITY</span>
@@ -5205,7 +5248,7 @@ export const GameWorld: React.FC = () => {
                   <motion.div 
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="mt-4 bg-amber-950/20 border border-amber-500/30 p-3.5 rounded-xl flex items-start gap-3 backdrop-blur-md max-w-sm pointer-events-auto group/quest"
+                    className="mt-4 bg-amber-950/20 border border-amber-500/30 p-2.5 sm:p-3.5 rounded-xl flex items-start gap-2.5 sm:gap-3 backdrop-blur-md max-w-[220px] sm:max-w-sm pointer-events-auto group/quest"
                   >
                     <Star className="text-amber-500 w-5 h-5 animate-pulse shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -5241,7 +5284,7 @@ export const GameWorld: React.FC = () => {
                   <motion.div 
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="mt-4 bg-emerald-950/20 border border-emerald-500/30 p-3.5 rounded-xl flex items-start gap-3 backdrop-blur-md max-w-sm pointer-events-auto group/quest"
+                    className="mt-4 bg-emerald-950/20 border border-emerald-500/30 p-2.5 sm:p-3.5 rounded-xl flex items-start gap-2.5 sm:gap-3 backdrop-blur-md max-w-[220px] sm:max-w-sm pointer-events-auto group/quest"
                   >
                     <CheckCircle2 className="text-emerald-500 w-5 h-5 animate-pulse shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -5267,7 +5310,7 @@ export const GameWorld: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={() => setShowQuestTracker(!showQuestTracker)}
-                            className="bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg text-xs font-mono text-gray-300 hover:text-white hover:bg-white/10 transition flex items-center gap-2 backdrop-blur-md"
+                            className="bg-black/60 border border-white/20 px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-mono whitespace-nowrap text-gray-300 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5 sm:gap-2 backdrop-blur-md"
                         >
                             {showQuestTracker ? <EyeOff className="w-3.5 h-3.5 text-red-400" /> : <Eye className="w-3.5 h-3.5 text-green-400" />}
                             {showQuestTracker ? 'HIDE QUEST LOG' : 'SHOW QUEST LOG'}
@@ -5275,7 +5318,7 @@ export const GameWorld: React.FC = () => {
                         
                         <button 
                             onClick={() => setOpenMapLabels(!openMapLabels)}
-                            className={`bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg text-xs font-mono transition flex items-center gap-2 backdrop-blur-md ${openMapLabels ? 'text-amber-400' : 'text-gray-400'}`}
+                            className={`bg-black/60 border border-white/20 px-2 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-mono whitespace-nowrap transition flex items-center gap-1.5 sm:gap-2 backdrop-blur-md ${openMapLabels ? 'text-amber-400' : 'text-gray-400'}`}
                         >
                             <Navigation className="w-3.5 h-3.5" />
                             {openMapLabels ? 'HIDE MINIMAP' : 'SHOW MINIMAP'}
@@ -5449,7 +5492,7 @@ export const GameWorld: React.FC = () => {
       {/* --- Pause Menu Overlay --- */}
       {menuOpen && gameState === 'playing' && (
          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center">
-            <div className="w-full max-w-md bg-gray-900 border border-white/10 p-8 rounded-2xl shadow-2xl">
+            <div className="w-full max-w-md bg-gray-900 border border-white/10 p-5 sm:p-8 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto mx-4">
                <h2 className="text-2xl font-mono font-bold uppercase tracking-widest text-center mb-8 border-b border-white/10 pb-4">Paused</h2>
                <div className="space-y-4">
                   <button onClick={()=>setMenuOpen(false)} className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors flex items-center justify-center gap-2.5 mx-auto">
