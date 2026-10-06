@@ -2826,17 +2826,23 @@ export const GameWorld: React.FC = () => {
           if (s.dashTimer > 0.25) s.isDashing = false;
       } else {
           let spdMult = s.isAttacking ? (s.attackType === 'fire' ? 1.5 : 0.2) : (s.isBlocking ? 0.3 : 1.0);
+          // Low-framerate stability: THREE.MathUtils.lerp does not clamp t, so at the
+          // clamped max delta (0.1s) ACCEL*delta = 4.0 and FRICTION*delta = 3.0 overshoot
+          // and diverge geometrically (x3 / x2 per frame), slingshotting the player across
+          // the map on any slow frame. Clamp t to 1 so velocity snaps without overshoot.
+          const accelT = Math.min(1, ACCEL * delta);
+          const fricT = Math.min(1, FRICTION * delta);
           if (inputLength > 0) {
-              s.velocity.x = THREE.MathUtils.lerp(s.velocity.x, moveX * SPEED * spdMult, ACCEL * delta);
-              s.velocity.z = THREE.MathUtils.lerp(s.velocity.z, moveZ * SPEED * spdMult, ACCEL * delta);
+              s.velocity.x = THREE.MathUtils.lerp(s.velocity.x, moveX * SPEED * spdMult, accelT);
+              s.velocity.z = THREE.MathUtils.lerp(s.velocity.z, moveZ * SPEED * spdMult, accelT);
               if (!s.isAttacking) {
                 const targetAngle = Math.atan2(s.velocity.x, s.velocity.z);
                 const diff = targetAngle - s.rotation;
                 s.rotation += Math.atan2(Math.sin(diff), Math.cos(diff)) * 12 * delta;
               }
           } else {
-              s.velocity.x = THREE.MathUtils.lerp(s.velocity.x, 0, FRICTION * delta);
-              s.velocity.z = THREE.MathUtils.lerp(s.velocity.z, 0, FRICTION * delta);
+              s.velocity.x = THREE.MathUtils.lerp(s.velocity.x, 0, fricT);
+              s.velocity.z = THREE.MathUtils.lerp(s.velocity.z, 0, fricT);
           }
       }
 
