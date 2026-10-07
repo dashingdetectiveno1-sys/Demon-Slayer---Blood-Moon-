@@ -201,7 +201,10 @@ const CUTSCENES: Record<string, { speaker: string; text: string; mood: string }[
     { speaker: 'You', text: 'Lungs burning. Fingers numb. Good - that means I am still alive to feel them. Stay with me, Hana. Blood Moon Dance.', mood: 'urgent' }
   ],
   bossArrival: [
+    { speaker: 'Narrator', text: 'The summit is silent. Even the snow dares not fall. Watch the mist, Ren. Watch it part.', mood: 'sinister' },
+    { speaker: 'Narrator', text: 'She comes down the moonlight like a dropped stitch.', mood: 'sinister' },
     { speaker: 'Shira (Moonweaver)', text: 'You climb well, for prey. But the moon is at its zenith, little blade, and every thread on this mountain answers to me. You walked into my family\'s web the moment you loved something.', mood: 'sinister' },
+    { speaker: 'Narrator', text: 'The Moonweaver. The red moon\'s final stitch.', mood: 'sinister' },
     { speaker: 'You', text: 'My family was never spun from stolen souls. Water cannot be woven, Shira - and it cannot be caught! Blood Moon Dance: Pale Sky!', mood: 'urgent' },
     { speaker: 'Narrator', text: 'The air turns to wire. Shira\'s defenses drink the moonlight - watch for her thread-locks and dash through the gaps!', mood: 'urgent' }
   ]
@@ -566,6 +569,44 @@ export const GameWorld: React.FC = () => {
       stateRef.current.cutsceneStepIdx = cutsceneLineIdx;
       if (cutsceneId && cutsceneLineIdx === 0) (audioManager as any).playStinger?.();
   }, [cutsceneId, cutsceneLineIdx]);
+  // Charon narration: one recorded clip per story beat, fired as the beat's
+  // line appears. Cutscene beats keyed cs:<id>:<step>, dialog beats dg:<id>:<line>.
+  useEffect(() => {
+      const NARR: Record<string, string> = {
+          'cs:intro:0': 'narr_intro',
+          'cs:forestEntrance:0': 'narr_forest',
+          'cs:caveEntrance:0': 'narr_cavern',
+          'cs:peakEntrance:0': 'narr_summit',
+          'cs:bossArrival:5': 'narr_midfight',
+          'dg:caveWin:0': 'narr_cocoon',
+          // Shira (Moonweaver) + Iwato character voices
+          'cs:bossArrival:2': 'shira_arrival',
+          'dg:bossIntro:0': 'shira_bossintro_1',
+          'dg:bossIntro:2': 'shira_bossintro_2',
+          'dg:bossWin:0': 'shira_death',
+          'dg:master_need_training:0': 'iwato_1',
+          'dg:master_need_training:1': 'iwato_2',
+          'dg:master_need_training:2': 'iwato_3',
+          'dg:villageIntro:0': 'iwato_4',
+          'dg:villageIntro:1': 'iwato_5',
+          'dg:peakArrival:2': 'iwato_memory',
+          'cs:intro:2': 'iwato_farewell',
+      };
+      const key = cutsceneId !== null
+          ? `cs:${cutsceneId}:${cutsceneLineIdx}`
+          : dialogId !== null ? `dg:${dialogId}:${dialogLineIdx}` : null;
+      if (key && NARR[key]) {
+          // The clip may still be fetching/decoding when the beat starts
+          // (fresh page load): retry briefly until the buffer is ready.
+          const name = NARR[key];
+          const tryPlay = (attempt: number) => {
+              const se: any = audioManager;
+              if (se.voiceBuffers && se.voiceBuffers[name]) { audioManager.playVoice(name, { volume: 1.0 }); return; }
+              if (attempt < 12) setTimeout(() => tryPlay(attempt + 1), 250);
+          };
+          tryPlay(0);
+      }
+  }, [cutsceneId, cutsceneLineIdx, dialogId, dialogLineIdx]);
   useEffect(() => {
       stateRef.current.dummyHits = dummyHits;
   }, [dummyHits]);
@@ -1635,6 +1676,75 @@ export const GameWorld: React.FC = () => {
         return stall;
     };
 
+    // Premium atmosphere pass: gradient sky dome, stars, moon glow, cool rim
+    // light. All single-draw-call additions (fog:false so the dome is unaffected).
+    const makeGlowTexture = () => {
+        const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+        const g = c.getContext('2d')!;
+        const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+        grad.addColorStop(0, 'rgba(255,255,255,1)');
+        grad.addColorStop(0.25, 'rgba(255,255,255,0.55)');
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(c);
+    };
+    const buildAtmosphere = (stageName: string) => {
+        const skyCols: Record<string, [number, number, number]> = {
+            village: [0x120726, 0x4a1524, 0x8a3a1a],
+            forest:  [0x040814, 0x0d1e33, 0x14301c],
+            cave:    [0x0a0512, 0x1c0f2a, 0x2a1030],
+            peak:    [0x0a1226, 0x2a1a33, 0x5c1e24],
+            boss:    [0x140205, 0x3d0a0a, 0x6e1414],
+        };
+        const [top, mid, bot] = skyCols[stageName] || skyCols.forest;
+        const skyMat = new THREE.ShaderMaterial({
+            side: THREE.BackSide, depthWrite: false, fog: false,
+            uniforms: {
+                topColor: { value: new THREE.Color(top) },
+                midColor: { value: new THREE.Color(mid) },
+                botColor: { value: new THREE.Color(bot) },
+            },
+            vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+            fragmentShader: 'uniform vec3 topColor; uniform vec3 midColor; uniform vec3 botColor; varying vec3 vP;' +
+                'void main(){ float h = normalize(vP).y;' +
+                ' vec3 c = h > 0.10 ? mix(midColor, topColor, smoothstep(0.10, 0.62, h))' +
+                ' : mix(botColor, midColor, smoothstep(-0.10, 0.10, h));' +
+                ' gl_FragColor = vec4(c, 1.0); }',
+        });
+        const sky = new THREE.Mesh(new THREE.SphereGeometry(420, 24, 16), skyMat);
+        sky.renderOrder = -10;
+        environmentGrp.add(sky);
+
+        // Stars (one draw call, additive points on the upper dome)
+        const starCount = isMobileDevice ? 260 : 500;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            const th = Math.random() * Math.PI * 2;
+            const ph = Math.acos(1 - Math.random() * 0.85); // upper hemisphere
+            const r = 390;
+            starPos[i*3] = r * Math.sin(ph) * Math.cos(th);
+            starPos[i*3+1] = r * Math.cos(ph) + 10;
+            starPos[i*3+2] = r * Math.sin(ph) * Math.sin(th);
+        }
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xcfe0ff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+        const stars = new THREE.Points(starGeo, starMat);
+        environmentGrp.add(stars);
+
+        // Blood-moon glow halo (additive sprite on top of the existing moon mesh)
+        const glowTex = makeGlowTexture();
+        const haloMat = new THREE.SpriteMaterial({ map: glowTex, color: stageName === 'boss' ? 0xff3333 : (stageName === 'village' ? 0xff7733 : 0xfff2cc), transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+        const halo = new THREE.Sprite(haloMat);
+        halo.position.set(100, 100, -205); halo.scale.set(160, 160, 1);
+        environmentGrp.add(halo);
+
+        // Cool moonlit rim from the opposite side (no shadows: free on phones)
+        const rim = new THREE.DirectionalLight(stageName === 'boss' ? 0xff6666 : 0x7a9aff, 0.55);
+        rim.position.set(-60, 40, 60);
+        environmentGrp.add(rim);
+    };
+
     const loadStage = (stageName: string) => {
         environmentGrp.clear(); lightsGrp.clear(); colliders.length = 0; stateRef.current.enemies = [];
         stateRef.current.projectiles.forEach(p => scene.remove(p.mesh));
@@ -1653,6 +1763,7 @@ export const GameWorld: React.FC = () => {
         dir.position.set(50, 100, -20); dir.castShadow = !isMobileDevice;
         if(dir.shadow) { dir.shadow.camera.left = -60; dir.shadow.camera.right = 60; dir.shadow.camera.top = 60; dir.shadow.camera.bottom = -60; }
         lightsGrp.add(amb, dir);
+        buildAtmosphere(stageName);
 
         // Moon / Sun
         const moonMat = new THREE.MeshBasicMaterial({ color: stageName === 'boss' ? 0xff2222 : (stageName === 'village' ? 0xffaa33 : 0xffffee) });
@@ -1698,6 +1809,48 @@ export const GameWorld: React.FC = () => {
             gTex.wrapS = THREE.RepeatWrapping; gTex.wrapT = THREE.RepeatWrapping;
             gTex.repeat.set(12, 12);
             groundMat = new THREE.MeshStandardMaterial({ map: gTex, roughness: 0.95 });
+        } else if (stageName === 'peak') {
+            // Snowfield ground: pale blue-white drifts with ice sparkle
+            const peakCanvas = document.createElement('canvas');
+            peakCanvas.width = 128; peakCanvas.height = 128;
+            const pk = peakCanvas.getContext('2d')!;
+            pk.fillStyle = '#c9d8e8'; pk.fillRect(0, 0, 128, 128);
+            for (let i = 0; i < 26; i++) {
+                const rx = Math.random() * 128; const ry = Math.random() * 128; const rr = 8 + Math.random() * 14;
+                const grad = pk.createRadialGradient(rx, ry, 0, rx, ry, rr);
+                grad.addColorStop(0, 'rgba(255,255,255,0.85)'); grad.addColorStop(1, 'rgba(201,216,232,0)');
+                pk.fillStyle = grad; pk.beginPath(); pk.arc(rx, ry, rr, 0, Math.PI*2); pk.fill();
+            }
+            pk.fillStyle = 'rgba(255,255,255,0.9)';
+            for (let i = 0; i < 40; i++) { pk.fillRect(Math.random()*128, Math.random()*128, 1, 1); }
+            const gTex = new THREE.CanvasTexture(peakCanvas);
+            gTex.wrapS = THREE.RepeatWrapping; gTex.wrapT = THREE.RepeatWrapping;
+            gTex.repeat.set(12, 12);
+            groundMat = new THREE.MeshStandardMaterial({ map: gTex, roughness: 0.6 });
+        } else if (stageName === 'cave') {
+            // Cavern ground: dark rock with faint purple venom seep
+            const caveCanvas = document.createElement('canvas');
+            caveCanvas.width = 128; caveCanvas.height = 128;
+            const cv = caveCanvas.getContext('2d')!;
+            cv.fillStyle = '#17111f'; cv.fillRect(0, 0, 128, 128);
+            for (let i = 0; i < 22; i++) {
+                const rx = Math.random() * 128; const ry = Math.random() * 128; const rr = 6 + Math.random() * 10;
+                const grad = cv.createRadialGradient(rx, ry, 0, rx, ry, rr);
+                grad.addColorStop(0, '#241a33'); grad.addColorStop(1, '#17111f');
+                cv.fillStyle = grad; cv.beginPath(); cv.arc(rx, ry, rr, 0, Math.PI*2); cv.fill();
+            }
+            cv.strokeStyle = 'rgba(150,80,220,0.55)'; cv.lineWidth = 1.0;
+            for (let i = 0; i < 8; i++) {
+                cv.beginPath();
+                let cx2 = Math.random() * 128; let cy2 = Math.random() * 128;
+                cv.moveTo(cx2, cy2);
+                for (let j = 0; j < 5; j++) { cx2 += (Math.random()-0.5)*30; cy2 += (Math.random()-0.5)*30; cv.lineTo(cx2, cy2); }
+                cv.stroke();
+            }
+            const gTex = new THREE.CanvasTexture(caveCanvas);
+            gTex.wrapS = THREE.RepeatWrapping; gTex.wrapT = THREE.RepeatWrapping;
+            gTex.repeat.set(12, 12);
+            groundMat = new THREE.MeshStandardMaterial({ map: gTex, roughness: 0.9 });
         } else {
             // Boss Volcanic lava garden ground
             const bossCanvas = document.createElement('canvas');
@@ -1741,6 +1894,7 @@ export const GameWorld: React.FC = () => {
         colliders.push({box: new THREE.Box3(new THREE.Vector3(-105, -10, 100), new THREE.Vector3(105, 50, 105))});
 
         if (stageName === 'village') {
+            const lanternGlowPts: number[] = [];
             playerObj.group.position.set(0, 5, 20); playerObj.group.rotation.y = Math.PI;
 
             // --- Hand-Crafted Stone Pavements ("Ishidatami") and Curbs ---
@@ -1923,7 +2077,7 @@ export const GameWorld: React.FC = () => {
             }
             const shojiTex = new THREE.CanvasTexture(shojiCanvas); shojiTex.magFilter = THREE.NearestFilter;
             
-            const matShoji = new THREE.MeshStandardMaterial({map: shojiTex, roughness: 0.85, emissive: 0x443311, emissiveIntensity: 1.0});
+            const matShoji = new THREE.MeshStandardMaterial({map: shojiTex, roughness: 0.85, emissive: 0xbb6622, emissiveIntensity: 0.85}); // warm paper-window glow at night
             const matRoof = new THREE.MeshStandardMaterial({color: 0x1c1c1c, roughness: 0.6});
             const matLantern = new THREE.MeshStandardMaterial({color: 0xff1100, emissive: 0xff1100, emissiveIntensity: 0.9});
             const matWalkway = new THREE.MeshStandardMaterial({color: 0x4a3422, roughness: 1.0});
@@ -2034,8 +2188,12 @@ export const GameWorld: React.FC = () => {
                                 dummy.scale.set(0,0,0); dummy.updateMatrix(); instRoof.setMatrixAt(hIdx, dummy.matrix); dummy.scale.set(1,1,1);
                             }
 
-                            instHLantern.setMatrixAt(hIdx*2, applyLocal(-3.8, 3.2, 4.0));
-                            instHLantern.setMatrixAt(hIdx*2+1, applyLocal(3.8, 3.2, 4.0));
+                            const hlm1 = applyLocal(-3.8, 3.2, 4.0).clone();
+                            instHLantern.setMatrixAt(hIdx*2, hlm1);
+                            lanternGlowPts.push(...new THREE.Vector3().setFromMatrixPosition(hlm1).toArray());
+                            const hlm2 = applyLocal(3.8, 3.2, 4.0).clone();
+                            instHLantern.setMatrixAt(hIdx*2+1, hlm2);
+                            lanternGlowPts.push(...new THREE.Vector3().setFromMatrixPosition(hlm2).toArray());
                             
                             hIdx++;
                         }
@@ -2304,12 +2462,46 @@ export const GameWorld: React.FC = () => {
                          if (pIdx < numPoles) {
                              instPole.setMatrixAt(pIdx, makeMatrix(c.x, 2, c.z));
                              instRedLantern.setMatrixAt(pIdx, makeMatrix(c.x, 4, c.z));
+                             lanternGlowPts.push(c.x, 4.2, c.z);
                              pIdx++;
                          }
                      });
                 }
             }
             environmentGrp.add(instPole, instRedLantern);
+
+            // Warm glow halos around every lantern head + soft light pools on the
+            // pavement below. Two Points systems (two draw calls), additive, no
+            // lights added - the night street reads premium for almost free.
+            {
+                const glowTexL = makeGlowTexture();
+                const n = lanternGlowPts.length / 3;
+                const headGeo = new THREE.BufferGeometry();
+                headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(lanternGlowPts), 3));
+                const headMat = new THREE.PointsMaterial({ map: glowTexL, color: 0xff7733, size: 5.5, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                environmentGrp.add(new THREE.Points(headGeo, headMat));
+                const poolArr = new Float32Array(n * 3);
+                for (let i = 0; i < n; i++) { poolArr[i*3] = lanternGlowPts[i*3]; poolArr[i*3+1] = 0.15; poolArr[i*3+2] = lanternGlowPts[i*3+2]; }
+                const poolGeo = new THREE.BufferGeometry();
+                poolGeo.setAttribute('position', new THREE.BufferAttribute(poolArr, 3));
+                const poolMat = new THREE.PointsMaterial({ map: glowTexL, color: 0xff5511, size: 10, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                environmentGrp.add(new THREE.Points(poolGeo, poolMat));
+            }
+
+            // Fallen petals scattered over the streets (one InstancedMesh)
+            {
+                const petalGeom = new THREE.CircleGeometry(0.09, 6);
+                const petalMat = new THREE.MeshBasicMaterial({ color: 0xffb7c5, transparent: true, opacity: 0.85 });
+                const petals = new THREE.InstancedMesh(petalGeom, petalMat, 260);
+                const pd = new THREE.Object3D();
+                for (let i = 0; i < 260; i++) {
+                    pd.position.set((Math.random() - 0.5) * 80, 0.12 + Math.random() * 0.02, (Math.random() - 0.5) * 100);
+                    pd.rotation.set(-Math.PI / 2, 0, Math.random() * Math.PI * 2);
+                    pd.updateMatrix();
+                    petals.setMatrixAt(i, pd.matrix);
+                }
+                environmentGrp.add(petals);
+            }
             
             // Add decorative trees/bamboo around the edges
             const bambooMat = new THREE.MeshStandardMaterial({ color: 0x3e5a3a, roughness: 0.8 });
@@ -2495,6 +2687,41 @@ export const GameWorld: React.FC = () => {
             }
             instSteps.instanceMatrix.needsUpdate = true;
             environmentGrp.add(instSteps);
+
+            // Fireflies drifting over the trail + low ground mist sheets (one
+            // draw call each, additive glow points - premium night-forest feel)
+            {
+                const nff = isMobileDevice ? 40 : 80;
+                const ffPos = new Float32Array(nff * 3);
+                const ffBase = new Float32Array(nff * 3);
+                const ffPhase = new Float32Array(nff);
+                for (let i = 0; i < nff; i++) {
+                    ffBase[i*3] = THREE.MathUtils.randFloatSpread(160);
+                    ffBase[i*3+1] = 0.6 + Math.random() * 3.2;
+                    ffBase[i*3+2] = THREE.MathUtils.randFloatSpread(160);
+                    ffPhase[i] = Math.random() * Math.PI * 2;
+                }
+                ffPos.set(ffBase);
+                const ffGeo = new THREE.BufferGeometry();
+                ffGeo.setAttribute('position', new THREE.BufferAttribute(ffPos, 3));
+                const ffMat = new THREE.PointsMaterial({ map: makeGlowTexture(), color: 0xaaff88, size: 0.9, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                const ff = new THREE.Points(ffGeo, ffMat);
+                ff.name = 'fireflies';
+                ff.userData.base = ffBase; ff.userData.phase = ffPhase;
+                environmentGrp.add(ff);
+
+                const nm = isMobileDevice ? 24 : 40;
+                const mArr = new Float32Array(nm * 3);
+                for (let i = 0; i < nm; i++) {
+                    mArr[i*3] = THREE.MathUtils.randFloatSpread(170);
+                    mArr[i*3+1] = 0.5 + Math.random() * 0.4;
+                    mArr[i*3+2] = THREE.MathUtils.randFloatSpread(170);
+                }
+                const mistGeo = new THREE.BufferGeometry();
+                mistGeo.setAttribute('position', new THREE.BufferAttribute(mArr, 3));
+                const mistMat = new THREE.PointsMaterial({ map: makeGlowTexture(), color: 0x6a9aaa, size: 17, transparent: true, opacity: 0.055, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                environmentGrp.add(new THREE.Points(mistGeo, mistMat));
+            }
 
             const bambooMat = new THREE.MeshStandardMaterial({ color: 0x2e4a2a, roughness: 0.8 });
             const instBamboo = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.3, 0.4, 25, 6), bambooMat, isMobileDevice?150:400);
@@ -2696,6 +2923,9 @@ export const GameWorld: React.FC = () => {
           timeMultiplier = 0.25; // Majestic boss defeat camera slow-mo
       } else if (s.stage === 'forest' && activeThreats === 0) {
           timeMultiplier = 0.35; // Stage clear slow-mo
+      } else if (s.activeCutscene === 'bossArrival' && ((s as any).__csSlow || 0) > 0) {
+          (s as any).__csSlow -= realDelta;
+          timeMultiplier = 0.35; // Descent impact slow-mo - cutscene-only, never player combat
       }
       realDelta *= timeMultiplier;
       
@@ -3414,7 +3644,15 @@ export const GameWorld: React.FC = () => {
       s.enemies.forEach(e => {
           if (!e.active) return;
           const dToPlayer = e.group.position.distanceTo(s.position);
-          
+
+          // Distance culling for forest demons: beyond fog visibility they are
+          // hidden (draw calls saved) and all AI/anim updates are skipped.
+          if (e.type === 'demon') {
+              const far = dToPlayer > 55;
+              if (e.group.visible !== !far) e.group.visible = !far;
+              if (far) { if (e.damageTimer > 0) e.damageTimer -= delta; return; }
+          }
+
           if (e.animParams && e.animParams.torso && e.type !== 'dummy') {
               const eBreath = Math.sin(time * 3 + e.group.position.x) * 0.03;
               e.animParams.torso.scale.set(1.0 + eBreath * 0.5, 1.0 + eBreath, 1.0 + eBreath * 0.5);
@@ -4178,6 +4416,20 @@ export const GameWorld: React.FC = () => {
           if (ghostInstanced.instanceColor) ghostInstanced.instanceColor.needsUpdate = true;
       }
       
+      // Firefly drift (forest only; the object exists only there)
+      const ffObj = environmentGrp.getObjectByName('fireflies') as THREE.Points | undefined;
+      if (ffObj) {
+          const posA = ffObj.geometry.attributes.position as THREE.BufferAttribute;
+          const base = ffObj.userData.base as Float32Array; const ph = ffObj.userData.phase as Float32Array;
+          const tt = timeNow / 1000;
+          for (let i = 0; i < ph.length; i++) {
+              posA.array[i*3] = base[i*3] + Math.sin(tt * 0.6 + ph[i]) * 1.2;
+              posA.array[i*3+1] = base[i*3+1] + Math.sin(tt * 0.9 + ph[i] * 1.7) * 0.5;
+              posA.array[i*3+2] = base[i*3+2] + Math.cos(tt * 0.5 + ph[i]) * 1.2;
+          }
+          posA.needsUpdate = true;
+      }
+
       // Weather Update
       const stage = s.stage;
       if (stage === 'village' || stage === 'forest' || stage === 'cave' || stage === 'peak' || stage === 'boss') {
@@ -4247,8 +4499,13 @@ export const GameWorld: React.FC = () => {
       playerObj.group.visible = (s.invulnTimer <= 0) || Math.floor(timeNow / 100) % 2 === 0;
 
       // Camera Controller
-      const tCamPos = s.position.clone().add(new THREE.Vector3(0, 10, 16));
-      if (s.attackType === 'fire' && s.isAttacking) tCamPos.z += 5; // zoom out for big skill
+      // GoW-feel: closer, lower, slightly over-the-shoulder follow cam. Same pitch
+      // as the old (0,10,16) offset (~31 deg down) so combat readability and the
+      // fixed-axis control mapping are unchanged. Middle distance: tight enough to
+      // feel intimate, far enough that the obstruction clamp still has room to work
+      // in the dense forest (verified at phone viewport).
+      const tCamPos = s.position.clone().add(new THREE.Vector3(0.8, 6.5, 11));
+      if (s.attackType === 'fire' && s.isAttacking) tCamPos.z += 4; // zoom out for big skill
       
       let shakeOffsetX = 0;
       let shakeOffsetY = 0;
@@ -4274,8 +4531,11 @@ export const GameWorld: React.FC = () => {
               camBox.set(new THREE.Vector3(px - CAM_CLR, py - CAM_CLR, pz - CAM_CLR), new THREE.Vector3(px + CAM_CLR, py + CAM_CLR, pz + CAM_CLR));
               return colliders.some(c => camBox.intersectsBox(c.box));
           };
+          // Scan from 12% out: a tree/pillar just behind the player (inside the
+          // first 30% of the segment) was previously invisible to this clamp and
+          // could park a trunk between camera and player for the whole fight.
           let hitT = -1;
-          for (let t = 0.3; t <= 1.0001; t += 0.05) {
+          for (let t = 0.12; t <= 1.0001; t += 0.05) {
               if (camPointBlocked(headPos.x + camSeg.x * t, headPos.y + camSeg.y * t, headPos.z + camSeg.z * t)) { hitT = t; break; }
           }
           if (hitT > 0) {
@@ -4321,19 +4581,172 @@ export const GameWorld: React.FC = () => {
                   tCamPos.set(0, 5, 20); tLook.copy(s.position).add(new THREE.Vector3(0, 2, 0));
               }
           } else if (cutsceneId === 'bossArrival') {
+              // Moonweaver Descent: fog approach -> descent -> eyes-first -> reveal -> Ren -> return
               if (idx === 0) {
-                  tCamPos.set(0, 18, -48); tLook.set(0, 6, -20);
+                  tCamPos.set(0, 0.8, 12); tLook.set(0, 2.5, -20);           // ankle-height across the floor
               } else if (idx === 1) {
-                  tCamPos.set(-6, 3, -28); tLook.set(0, 1.6, -20);
+                  tCamPos.set(3.5, 2.0, -4); tLook.set(0, 12, -20);          // tilt up to catch the fall
               } else if (idx === 2) {
+                  tCamPos.set(1.4, 2.4, -14.5); tLook.set(0, 3.6, -20);      // close on the eyes
+              } else if (idx === 3) {
+                  tCamPos.set(-2.5, 5.5, -9); tLook.set(0, 3.2, -20);        // pull back, low hero angle up at her
+              } else if (idx === 4) {
+                  tCamPos.copy(s.position).add(new THREE.Vector3(2, 2.2, 6)); tLook.copy(s.position).add(new THREE.Vector3(0, 1.5, 0)); // cut to Ren
+              } else {
                   tCamPos.copy(s.position).add(new THREE.Vector3(0, 3, 7)); tLook.copy(s.position).add(new THREE.Vector3(0, 1.2, -3));
               }
+              tCamPos.add(new THREE.Vector3(shakeOffsetX, shakeOffsetY, 0)); // impact shake applies in-scene too
           }
           // Cinematic slow push-in within each cutscene beat
           const beatKey = s.activeCutscene + '|' + (s.cutsceneStepIdx || 0);
           if ((s as any).__csBeat !== beatKey) { (s as any).__csBeat = beatKey; (s as any).__csDrift = 0; }
           (s as any).__csDrift = Math.min(((s as any).__csDrift || 0) + realDelta * 0.22, 2.2);
           tCamPos.addScaledVector(tLook.clone().sub(tCamPos).normalize(), (s as any).__csDrift);
+
+          // Moonweaver Descent FX - cutscene-only props, live in environmentGrp so
+          // loadStage clears them automatically when the boss stage loads.
+          if (s.activeCutscene === 'bossArrival') {
+              let fx = environmentGrp.getObjectByName('descentFx') as THREE.Group;
+              if (!fx) {
+                  fx = new THREE.Group(); fx.name = 'descentFx';
+                  const glow = makeGlowTexture();
+                  const fogN = 26; const fogPos = new Float32Array(fogN * 3);
+                  for (let i = 0; i < fogN; i++) { fogPos[i*3] = -16 + Math.random()*32; fogPos[i*3+1] = 0.3 + Math.random()*0.7; fogPos[i*3+2] = -30 + Math.random()*22; }
+                  const fogGeom = new THREE.BufferGeometry(); fogGeom.setAttribute('position', new THREE.BufferAttribute(fogPos, 3));
+                  const fog = new THREE.Points(fogGeom, new THREE.PointsMaterial({ map: glow, color: 0x5a7a96, size: 9, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+                  fog.name = 'fog'; fx.add(fog);
+                  const fig = new THREE.Group(); fig.name = 'figure';
+                  const darkMat = new THREE.MeshBasicMaterial({ color: 0x050308, transparent: true });
+                  const robe = new THREE.Mesh(new THREE.ConeGeometry(1.15, 3.4, 10), darkMat);
+                  robe.position.y = 1.7;
+                  const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 12), darkMat);
+                  head.position.y = 3.55;
+                  // ragged hem: tattered silk strips hanging off the robe edge
+                  for (let i = 0; i < 7; i++) {
+                      const a = (i / 7) * Math.PI * 2;
+                      const strip = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.7 + Math.random() * 0.5, 4), darkMat);
+                      strip.position.set(Math.cos(a) * 0.95, 0.25, Math.sin(a) * 0.95);
+                      strip.rotation.x = Math.PI; // point down
+                      strip.rotation.z = (Math.random() - 0.5) * 0.3;
+                      fig.add(strip);
+                  }
+                  // spider-leg splay at the base: thin cones angled out, tips to the floor
+                  for (let i = 0; i < 6; i++) {
+                      const a = (i / 6) * Math.PI * 2 + 0.26;
+                      const leg = new THREE.Mesh(new THREE.ConeGeometry(0.06, 2.4, 4), darkMat);
+                      leg.position.set(Math.cos(a) * 1.05, 0.85, Math.sin(a) * 1.05);
+                      leg.rotation.z = Math.cos(a) * 1.15;
+                      leg.rotation.x = -Math.sin(a) * 1.15;
+                      fig.add(leg);
+                  }
+                  // arm hints from the upper body
+                  for (const sideM of [-1, 1]) {
+                      const arm = new THREE.Mesh(new THREE.ConeGeometry(0.07, 1.5, 4), darkMat);
+                      arm.position.set(sideM * 0.85, 2.2, 0.1);
+                      arm.rotation.z = sideM * 2.2;
+                      fig.add(arm);
+                  }
+                  const eyeL = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xff2438, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  eyeL.position.set(-0.16, 3.6, 0.38); eyeL.scale.set(0.22, 0.22, 1); eyeL.name = 'eyeL';
+                  const eyeR = eyeL.clone(); eyeR.position.x = 0.16; eyeR.name = 'eyeR';
+                  // thread wisps: vertical additive strands that sway and rise off the figure
+                  const wisps = new THREE.Group(); wisps.name = 'wisps';
+                  for (let i = 0; i < 12; i++) {
+                      const w = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: i % 3 === 0 ? 0xff8090 : 0xff4552, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }));
+                      const a = (i / 12) * Math.PI * 2;
+                      w.position.set(Math.cos(a) * (0.5 + Math.random() * 0.7), 0.6 + Math.random() * 3.0, Math.sin(a) * (0.5 + Math.random() * 0.7));
+                      w.scale.set(0.09, 0.7 + Math.random() * 0.6, 1);
+                      w.userData.ph = Math.random() * Math.PI * 2;
+                      w.userData.bx = w.position.x; w.userData.bz = w.position.z; w.userData.by = w.position.y;
+                      wisps.add(w);
+                  }
+                  fig.add(wisps);
+                  fig.add(robe, head, eyeL, eyeR);
+                  fig.position.set(0, 30, -20); fig.visible = false;
+                  fx.add(fig);
+                  const ring = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xff4a55, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  ring.position.set(0, 0.4, -20); ring.scale.set(1, 0.6, 1); ring.name = 'ring';
+                  fx.add(ring);
+                  const flareN = 14; const flarePos = new Float32Array(flareN * 3);
+                  for (let i = 0; i < flareN; i++) { flarePos[i*3] = 0; flarePos[i*3+1] = 2.5; flarePos[i*3+2] = -20; }
+                  const flareGeom = new THREE.BufferGeometry(); flareGeom.setAttribute('position', new THREE.BufferAttribute(flarePos, 3));
+                  const flare = new THREE.Points(flareGeom, new THREE.PointsMaterial({ map: glow, color: 0xff5566, size: 0.5, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+                  flare.name = 'flare'; (flare as any).userData.vel = [];
+                  for (let i = 0; i < flareN; i++) { const a = (i / flareN) * Math.PI * 2; (flare as any).userData.vel.push([Math.cos(a) * 6, 2.5 + Math.random() * 2, Math.sin(a) * 6]); }
+                  fx.add(flare);
+                  environmentGrp.add(fx);
+              }
+              const beatIdx = s.cutsceneStepIdx || 0;
+              const beatKey2 = 'fx|' + beatIdx;
+              if ((s as any).__fxBeat !== beatKey2) { (s as any).__fxBeat = beatKey2; (s as any).__fxT = 0; (s as any).__csLand = 0; (s as any).__csFlared = 0; }
+              (s as any).__fxT = ((s as any).__fxT || 0) + realDelta;
+              const ft = (s as any).__fxT as number;
+              const fig = fx.getObjectByName('figure') as THREE.Group;
+              const fog = fx.getObjectByName('fog') as THREE.Points;
+              const ring = fx.getObjectByName('ring') as THREE.Sprite;
+              const flare = fx.getObjectByName('flare') as THREE.Points;
+              fog.rotation.y += realDelta * 0.03;
+              const wisps = fig.getObjectByName('wisps') as THREE.Group;
+              if (wisps) {
+                  const falling = beatIdx === 1 && fig.position.y > 0.5;
+                  wisps.children.forEach((w: any, i: number) => {
+                      const t = ft + w.userData.ph;
+                      w.position.x = w.userData.bx + Math.sin(t * 1.7) * 0.22;
+                      w.position.y = falling ? w.userData.by + 1.2 : w.userData.by + Math.sin(t * 0.9) * 0.35;
+                      w.material.opacity = 0.22 + 0.18 * (0.5 + 0.5 * Math.sin(t * 2.6 + i));
+                      w.scale.y = falling ? 1.9 : 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(t * 1.3));
+                  });
+              }
+              if (beatIdx >= 1) {
+                  fig.visible = true;
+                  if (beatIdx === 1) {
+                      const p = Math.min(ft / 1.7, 1);
+                      fig.position.y = 30 * (1 - p * p);
+                      if (p >= 1 && !(s as any).__csLand) {
+                          (s as any).__csLand = 1;
+                          (s as any).__csSlow = 0.55;
+                          s.shakeTrauma = Math.min((s.shakeTrauma || 0) + 0.8, 1);
+                          ring.userData.t = 0.0001;
+                      }
+                  } else {
+                      fig.position.y = 0;
+                      fig.rotation.y = Math.sin(ft * 1.2) * 0.05;
+                  }
+              }
+              if (ring.userData.t) {
+                  ring.userData.t += realDelta;
+                  const k = Math.min(ring.userData.t / 0.7, 1);
+                  (ring.material as THREE.SpriteMaterial).opacity = 0.9 * (1 - k);
+                  ring.scale.set(2 + k * 12, 1.2 + k * 7, 1);
+              }
+              const eyeL = fig.getObjectByName('eyeL') as THREE.Sprite;
+              const eyeR = fig.getObjectByName('eyeR') as THREE.Sprite;
+              if (beatIdx === 2) {
+                  const op = Math.min(ft / 0.9, 1) * 0.95;
+                  (eyeL.material as THREE.SpriteMaterial).opacity = op;
+                  (eyeR.material as THREE.SpriteMaterial).opacity = op;
+              } else if (beatIdx > 2) {
+                  (eyeL.material as THREE.SpriteMaterial).opacity = 0.95;
+                  (eyeR.material as THREE.SpriteMaterial).opacity = 0.95;
+              }
+              if (beatIdx >= 3) {
+                  if (!(s as any).__csFlared) { (s as any).__csFlared = 1; flare.userData.t = 0.0001; (flare.material as THREE.PointsMaterial).opacity = 0.95; }
+                  if (flare.userData.t) {
+                      flare.userData.t += realDelta;
+                      const k = Math.min(flare.userData.t / 1.2, 1);
+                      const pos = (flare.geometry as THREE.BufferGeometry).attributes.position as THREE.BufferAttribute;
+                      for (let i = 0; i < pos.count; i++) {
+                          pos.setXYZ(i, pos.getX(i) + flare.userData.vel[i][0] * realDelta * (1 - k), pos.getY(i) + flare.userData.vel[i][1] * realDelta * (1 - k), pos.getZ(i) + flare.userData.vel[i][2] * realDelta * (1 - k));
+                      }
+                      pos.needsUpdate = true;
+                      (flare.material as THREE.PointsMaterial).opacity = 0.95 * (1 - k);
+                  }
+              }
+              if (beatIdx >= 4) {
+                  const fade = Math.max(1 - ft / 1.0, 0);
+                  fig.traverse((o: any) => { if (o.material && !o.isSprite) o.material.opacity = fade; });
+              }
+          }
       }
 
       camera.position.lerp(tCamPos, 6.0 * (delta > 0 ? delta : 0.016));
@@ -4657,7 +5070,6 @@ export const GameWorld: React.FC = () => {
       setGameState('playing');
       if (isNewGame) {
           setCutsceneId('intro');
-          audioManager.playVoice('narrator_intro', { volume: 1.0 });
           setCutsceneLineIdx(0);
       }
   };
@@ -4702,7 +5114,7 @@ export const GameWorld: React.FC = () => {
              setCutsceneLineIdx(0);
           } else if (finishedId === 'bossWin') {
              setGameState('victory');
-             audioManager.playVoice('victory_line', { volume: 1.0 });
+             audioManager.playVoice('narr_victory', { volume: 1.0 });
           }
       } else {
           setDialogLineIdx(prev => prev + 1);
@@ -5371,7 +5783,7 @@ export const GameWorld: React.FC = () => {
         const isUpper = boss.demonicRank === 'Elder Horror';
         
         return (
-          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 w-full max-w-xl px-6 z-25 pointer-events-none select-none">
+          <div className="absolute top-64 sm:top-24 left-1/2 transform -translate-x-1/2 w-full max-w-xl px-6 z-25 pointer-events-none select-none">
              <div className="flex flex-col items-center w-full">
                {/* Name & Title */}
                <div className="flex items-center space-x-2.5 mb-2">
@@ -5379,7 +5791,7 @@ export const GameWorld: React.FC = () => {
                    {boss.demonicRank || "Horror Boss"}
                  </span>
                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-                   {isUpper ? "Brood Mother • Shira's Brood" : "Weaver Spawn"}
+                   {isUpper ? "Shira • The Moonweaver" : "Weaver Spawn"}
                  </h4>
                </div>
                
@@ -5387,7 +5799,7 @@ export const GameWorld: React.FC = () => {
                <div className="w-full bg-black/70 border border-red-500/30 p-2 rounded-lg flex items-center space-x-3 shadow-[0_0_20px_rgba(255,0,0,0.25)] backdrop-blur-md">
                   {/* Demon symbol indicator */}
                   <div className={`w-6 h-6 rounded-full border flex items-center justify-center font-bold text-[10px] font-mono ${isUpper ? 'border-amber-500 bg-amber-950 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'border-purple-500 bg-purple-950 text-purple-300'} animate-pulse`}>
-                    鬼
+                    ☾
                   </div>
                   {/* Track */}
                   <div className="flex-1 h-3 bg-gray-950 rounded-sm overflow-hidden relative border border-white/5">
@@ -5414,6 +5826,9 @@ export const GameWorld: React.FC = () => {
       })()}
 
       {gameState === 'playing' && cutsceneId === null && (
+        <>
+        {/* Premium cinematic vignette over gameplay (pure CSS, zero GPU cost) */}
+        <div className="absolute inset-0 pointer-events-none z-10" style={{background: 'radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(5,2,8,0.42) 100%)'}} />
         <div className="absolute top-4 left-4 md:top-6 md:left-6 right-4 flex justify-between pointer-events-none z-20">
             {/* Player Stats Corner */}
             <div className="w-full max-w-[220px] sm:max-w-sm [@media(max-height:480px)]:max-w-[180px]">
@@ -5692,6 +6107,7 @@ export const GameWorld: React.FC = () => {
                 </AnimatePresence>
             </div>
         </div>
+        </>
       )}
 
       {/* --- Pause Menu Overlay --- */}
@@ -5822,6 +6238,19 @@ export const GameWorld: React.FC = () => {
           <div className="flex-1 flex items-center justify-center bg-transparent relative pointer-events-none overflow-hidden">
             {/* Ambient vignette */}
             <div className="absolute inset-0 bg-gradient-radial from-transparent to-black/80 pointer-events-none z-10" />
+
+            {/* Moonweaver Descent: cold cyan grade during the eyes-first beat */}
+            {cutsceneId === 'bossArrival' && cutsceneLineIdx === 2 && (
+                <div className="absolute inset-0 z-20 pointer-events-none" style={{background:'linear-gradient(180deg, rgba(3,14,24,0.78) 0%, rgba(5,24,38,0.62) 55%, rgba(8,6,16,0.80) 100%)'}} />
+            )}
+            {/* Moonweaver Descent: name card on the full reveal */}
+            {cutsceneId === 'bossArrival' && cutsceneLineIdx === 3 && (
+                <div className="absolute inset-x-0 bottom-[20%] z-30 flex flex-col items-center pointer-events-none">
+                    <div className="text-[10px] font-mono tracking-[0.5em] text-red-400/80 uppercase mb-1">The Red Moon's Final Stitch</div>
+                    <div className="text-4xl font-black tracking-[0.18em] text-white" style={{fontFamily:'serif', textShadow:'0 0 18px rgba(255,40,60,0.65)'}}>SHIRA</div>
+                    <div className="text-sm font-mono tracking-[0.35em] text-red-200/90 uppercase mt-1">The Moonweaver</div>
+                </div>
+            )}
             
             {/* Dynamic VFX Layer based on Mood */}
             {(() => {
