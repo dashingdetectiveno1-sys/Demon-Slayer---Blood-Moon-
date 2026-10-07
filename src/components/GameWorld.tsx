@@ -13,6 +13,7 @@ import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 import { MobileControls } from './MobileControls';
 import { Flame, Heart, Zap, Skull, ShieldAlert, Droplets, ArrowUp, Sword, Coins, Star, Menu, X, ChevronRight, Info, ShoppingBag, Award, CheckCircle2, Lock, Unlock, Save, BookOpen, Compass, HelpCircle, Volume2, Eye, EyeOff, Navigation, Settings } from 'lucide-react';
 import { audioManager } from '../audio';
+import OpeningCinematic from './OpeningCinematic';
 import { motion, AnimatePresence } from 'motion/react';
 
 const RANKS = ['New Moon', 'Crescent', 'Quarter', 'Gibbous', 'Full Moon', 'Red Crescent', 'Red Quarter', 'Red Gibbous', 'Blood Moon', 'Eclipse'];
@@ -298,7 +299,7 @@ export const GameWorld: React.FC = () => {
   const [mobileMode, setMobileMode] = useState<'auto' | true | false>('auto');
   
   // Game UI States
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameover' | 'victory' | 'loading'>('menu');
+  const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameover' | 'victory' | 'loading' | 'opening'>('menu');
   const [currentStage, setCurrentStage] = useState<'village' | 'forest' | 'boss'>('village');
   const [dialogId, setDialogId] = useState<string | null>(null);
   const [dialogLineIdx, setDialogLineIdx] = useState<number>(0);
@@ -5067,11 +5068,16 @@ export const GameWorld: React.FC = () => {
           localStorage.removeItem('cm_savegame');
       }
       
-      setGameState('playing');
       if (isNewGame) {
-          setCutsceneId('intro');
-          setCutsceneLineIdx(0);
+          setGameState('opening'); // key-art opening cinematic, then straight into play
+      } else {
+          setGameState('playing');
       }
+  };
+
+  const finishOpening = () => {
+      stateRef.current.dummyHits = 0;
+      setGameState('playing');
   };
 
   const advanceDialog = () => {
@@ -6023,7 +6029,7 @@ export const GameWorld: React.FC = () => {
                         onClick={() => setOpenMapLabels(!openMapLabels)}
                         title="Toggle Map Overlay"
                     >
-                        <Compass className="w-6 h-6 text-amber-400" />
+                        <Compass className="w-6 h-6 text-red-400" />
                     </button>
                     <button 
                       className="pointer-events-auto p-2 bg-black/50 border border-white/20 rounded-full hover:bg-white/20 transition-colors backdrop-blur-md"
@@ -6040,67 +6046,85 @@ export const GameWorld: React.FC = () => {
                   </div>
                 )}
                 
-                {/* --- Minimap Overlay --- */}
+                {/* --- Minimap Overlay: Moonveil Compass --- */}
                 <AnimatePresence>
                 {openMapLabels && (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="bg-black/60 border-2 border-[#bb8844]/40 p-2 rounded-full w-40 h-40 md:w-48 md:h-48 backdrop-blur-md shadow-[0_0_30px_rgba(187,136,68,0.2)] relative overflow-hidden pointer-events-auto"
+                        className="relative w-40 h-40 md:w-48 md:h-48 pointer-events-auto mt-16 sm:mt-0"
                     >
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-black/40 to-black/80"></div>
-                        <div className="absolute inset-0 border border-white/10 rounded-full m-2"></div>
-                        {/* Compass N point */}
-                        <div className="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] font-mono text-amber-500 font-bold z-10 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">N</div>
+                        {/* Moon-seal ring + ink lines */}
+                        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full drop-shadow-[0_0_18px_rgba(220,38,38,0.25)]">
+                            <defs>
+                                <radialGradient id="mvFog" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stopColor="rgba(8,6,10,0.55)" />
+                                    <stop offset="55%" stopColor="rgba(8,6,10,0.72)" />
+                                    <stop offset="100%" stopColor="rgba(4,3,6,0.95)" />
+                                </radialGradient>
+                                <mask id="mvCrescent">
+                                    <rect width="100" height="100" fill="black" />
+                                    <circle cx="50" cy="50" r="26" fill="white" />
+                                    <circle cx="58" cy="44" r="22" fill="black" />
+                                </mask>
+                            </defs>
+                            <circle cx="50" cy="50" r="49" fill="url(#mvFog)" />
+                            <circle cx="50" cy="50" r="26" fill="rgba(220,38,38,0.10)" mask="url(#mvCrescent)" />
+                            <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(220,38,38,0.55)" strokeWidth="1.1" />
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="0.5" />
+                            <line x1="50" y1="3.5" x2="50" y2="9" stroke="rgba(220,38,38,0.9)" strokeWidth="1.2" />
+                            <line x1="50" y1="91" x2="50" y2="95.5" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
+                            <line x1="3.5" y1="50" x2="8" y2="50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
+                            <line x1="92" y1="50" x2="96.5" y2="50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
+                        </svg>
+                        <div className="absolute top-[7px] left-1/2 -translate-x-1/2 text-[9px] font-mono text-red-400 font-bold z-10 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">N</div>
                         
-                        {/* Map entities rendered relative to player - Now Static North Up */}
+                        {/* Entities relative to player - static north-up, sinking into fog at the rim */}
                         <div className="absolute top-1/2 left-1/2 w-full h-full -translate-x-1/2 -translate-y-1/2 z-0">
                             {mapEntities.map((ent, idx) => {
-                                // Scale world coords to minimap coords
-                                const viewRadius = 100; // Increased radius for better overview
-                                const mapRadius = 70; // 70px inside the minimap
-                                
+                                const viewRadius = 60;
+                                const mapRadius = 70;
                                 const rx = ent.x - playerPos.x;
                                 const rz = ent.z - playerPos.z;
-                                
-                                // Check distance
                                 const dist = Math.sqrt(rx*rx + rz*rz);
                                 if (dist > viewRadius) return null;
-                                
-                                // Map coords (center is 0,0). -Z is Forward (Up)
+                                const fog = Math.max(0.15, 1 - (dist / viewRadius) * 0.85);
                                 const mx = (rx / viewRadius) * mapRadius;
                                 const mz = (rz / viewRadius) * mapRadius;
                                 
                                 let blipColor = 'bg-white';
                                 let blipScale = 'w-1.5 h-1.5';
+                                let blipShape = 'rounded-full';
                                 if (ent.type === 'demon' || ent.type === 'boss') {
-                                    blipColor = 'bg-red-500 shadow-[0_0_8px_rgba(255,0,0,1)] z-10 opacity-80';
+                                    blipColor = 'bg-red-500 shadow-[0_0_8px_rgba(255,30,30,1)] z-10';
+                                    blipScale = 'w-2 h-2';
                                 } else if (ent.type === 'npc' || ent.type === 'warden') {
-                                    blipColor = 'bg-blue-400 shadow-[0_0_8px_rgba(100,150,255,1)] opacity-70';
+                                    blipColor = 'bg-slate-200 shadow-[0_0_6px_rgba(226,232,240,0.9)]';
                                     if (ent.id === 'master') {
-                                        blipColor = 'bg-amber-400 shadow-[0_0_10px_rgba(255,200,0,1)] z-30 scale-125';
+                                        blipColor = 'bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,1)] z-30 scale-125';
                                     }
                                 } else if (ent.type === 'shop') {
-                                    blipColor = 'bg-green-400 shadow-[0_0_8px_rgba(0,255,100,1)] opacity-80';
+                                    blipColor = 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]';
+                                    blipShape = 'rounded-[2px] rotate-45';
                                 } else if (ent.type === 'dummy') {
-                                    blipColor = 'bg-cyan-400 shadow-[0_0_8px_rgba(0,255,255,1)] z-20 animate-pulse';
+                                    blipColor = 'bg-orange-300 shadow-[0_0_8px_rgba(253,186,116,1)] z-20 animate-pulse';
                                 } else if (ent.type === 'cocoon') {
-                                    blipColor = 'bg-purple-500 shadow-[0_0_12px_rgba(180,0,255,1)] saturate-200 animate-pulse z-20 w-2.5 h-2.5';
+                                    blipColor = 'bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,1)] saturate-200 animate-pulse z-20 w-2.5 h-2.5';
                                 }
                                 
                                 return (
                                     <div key={idx} 
-                                         className={`absolute rounded-full -translate-x-1/2 -translate-y-1/2 border border-white/20 transition-all duration-300 ${blipColor} ${blipScale}`} 
-                                         style={{ left: `calc(50% + ${mx}px)`, top: `calc(50% + ${mz}px)` }}
+                                         className={`absolute ${blipShape} -translate-x-1/2 -translate-y-1/2 border border-white/25 transition-all duration-300 ${blipColor} ${blipScale}`} 
+                                         style={{ left: `calc(50% + ${mx}px)`, top: `calc(50% + ${mz}px)`, opacity: fog }}
                                     />
                                 );
                             })}
                         </div>
-                        {/* Player Icon at Center (Rotating) */}
-                        <div className="absolute top-1/2 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 text-white z-20 flex justify-center items-center drop-shadow-[0_0_5px_rgba(187,136,68,1)]"
+                        {/* Player seal at center */}
+                        <div className="absolute top-1/2 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 text-white z-20 flex justify-center items-center drop-shadow-[0_0_6px_rgba(220,38,38,1)]"
                              style={{ transform: `translate(-50%, -50%) rotate(${playerPos.rot + Math.PI}rad)` }}>
-                            <Navigation className="w-4 h-4 fill-white text-amber-500 mb-[2px]" />
+                            <Navigation className="w-4 h-4 fill-white text-red-500 mb-[2px]" />
                         </div>
                     </motion.div>
                 )}
@@ -6706,6 +6730,10 @@ export const GameWorld: React.FC = () => {
       })()}
 
       {/* --- Game Over & Victory States --- */}
+      {gameState === 'opening' && (
+      <OpeningCinematic onFinish={finishOpening} />
+      )}
+
       {gameState === 'gameover' && (() => {
          const penalty = mon >= 5 ? 5 : mon;
          return (
@@ -6889,11 +6917,4 @@ export const GameWorld: React.FC = () => {
             <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
             <div>
               <div className="font-bold uppercase tracking-wider text-green-400 font-mono">Progression Secured</div>
-              <div className="text-xs text-blue-300">Your journey was safely sealed. It can be resumed anytime!</div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
+     
