@@ -614,6 +614,18 @@ export const GameWorld: React.FC = () => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: !isMobileDevice, powerPreference: 'high-performance' });
+    // WebGL context-loss recovery (mobile GPUs can drop the context under load):
+    // offer a one-tap restore instead of a permanently frozen screen.
+    if (canvasRef.current) {
+        canvasRef.current.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            const ov = document.createElement('div');
+            ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:monospace;color:#fff;text-align:center;padding:24px';
+            ov.innerHTML = '<div style="font-size:18px;letter-spacing:2px">GRAPHICS HICCUP</div><div style="font-size:12px;color:#aaa">Your progress is saved.</div><button id="gl-restore" style="padding:14px 28px;background:#7f1d1d;border:1px solid #ef4444;color:#fff;font-family:monospace;letter-spacing:2px;border-radius:8px;font-size:14px">TAP TO RESTORE</button>';
+            document.body.appendChild(ov);
+            document.getElementById('gl-restore')?.addEventListener('click', () => { try { saveGameData(); } catch {} window.location.reload(); });
+        });
+    }
     
     renderer.setSize(width, height);
     renderer.setPixelRatio(isMobileDevice ? 1 : Math.min(window.devicePixelRatio, 2));
@@ -2760,7 +2772,6 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'water'; s.stamina -= 30; s.velocity.y = 10; s.isOnFloor = false;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playWater();
-            audioManager.playVoice('skill_water', { cooldown: 1200 });
             keys['o'] = false; s.input.skill1 = false;
         }
 
@@ -2769,7 +2780,6 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'fire'; s.stamina -= 50;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playFire();
-            audioManager.playVoice('skill_fire', { cooldown: 1200 });
             keys['l'] = false; s.input.skill2 = false;
         }
 
@@ -2778,7 +2788,6 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'thunder'; s.stamina -= 40;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playThunder();
-            audioManager.playVoice('skill_thunder', { cooldown: 1200 });
             keys['u'] = false; s.input.skill3 = false;
         }
 
@@ -2883,10 +2892,30 @@ export const GameWorld: React.FC = () => {
       const getPBox = (px:number, py:number, pz:number) => playerBox.set(new THREE.Vector3(px-pR, py, pz-pR), new THREE.Vector3(px+pR, py+pH, pz+pR));
       const checkCol = (b: THREE.Box3) => colliders.some(c => b.intersectsBox(c.box));
 
-      getPBox(s.position.x + moveDelta.x, s.position.y, s.position.z);
-      if (!checkCol(playerBox)) s.position.x += moveDelta.x; else s.velocity.x = 0;
-      getPBox(s.position.x, s.position.y, s.position.z + moveDelta.z);
-      if (!checkCol(playerBox)) s.position.z += moveDelta.z; else s.velocity.z = 0;
+      // Depenetration rescue: if the player is already inside a collider (e.g. a
+      // high-speed skill tunneled through a thin wall on a low-fps phone), push
+      // out along the smallest escape axis instead of soft-locking forever.
+      getPBox(s.position.x, s.position.y, s.position.z);
+      const stuckIn = colliders.find(c => playerBox.intersectsBox(c.box));
+      if (stuckIn) {
+          const b = stuckIn.box;
+          const escX1 = (s.position.x + pR) - b.min.x, escX2 = b.max.x - (s.position.x - pR);
+          const escZ1 = (s.position.z + pR) - b.min.z, escZ2 = b.max.z - (s.position.z - pR);
+          const mX = Math.min(escX1, escX2), mZ = Math.min(escZ1, escZ2);
+          if (mX < mZ) s.position.x += (escX1 < escX2 ? -(escX1 + 0.06) : (escX2 + 0.06));
+          else s.position.z += (escZ1 < escZ2 ? -(escZ1 + 0.06) : (escZ2 + 0.06));
+      }
+
+      // Substep large per-frame moves (low-fps phones + Stormstep/dash speeds can
+      // otherwise tunnel straight through thin colliders).
+      const subSteps = Math.max(1, Math.min(8, Math.ceil(Math.max(Math.abs(moveDelta.x), Math.abs(moveDelta.z)) / 0.6)));
+      const stepX = moveDelta.x / subSteps, stepZ = moveDelta.z / subSteps;
+      for (let ss = 0; ss < subSteps; ss++) {
+          getPBox(s.position.x + stepX, s.position.y, s.position.z);
+          if (!checkCol(playerBox)) s.position.x += stepX; else { s.velocity.x = 0; break; }
+          getPBox(s.position.x, s.position.y, s.position.z + stepZ);
+          if (!checkCol(playerBox)) s.position.z += stepZ; else { s.velocity.z = 0; break; }
+      }
 
       // World boundary: soft radial wall around the stage so the player can never walk
       // out of the playable area into empty sky/fog (content lives within ~90m of origin,
