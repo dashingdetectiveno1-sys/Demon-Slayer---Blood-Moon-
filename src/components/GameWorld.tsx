@@ -1003,8 +1003,8 @@ export const GameWorld: React.FC = () => {
           g.add(btn);
       }
  
-      const lArm = buildRealisticLimb(0.2, 0.7, 0x187A4F, true); lArm.pivot.position.set(-0.4, 1.1, 0); g.add(lArm.pivot);
-      const rArm = buildRealisticLimb(0.2, 0.7, 0x187A4F, true); rArm.pivot.position.set(0.4, 1.1, 0); g.add(rArm.pivot);
+      const lArm = buildRealisticLimb(0.2, 0.7, 0x8a1428, true); lArm.pivot.position.set(-0.4, 1.1, 0); g.add(lArm.pivot);
+      const rArm = buildRealisticLimb(0.2, 0.7, 0x8a1428, true); rArm.pivot.position.set(0.4, 1.1, 0); g.add(rArm.pivot);
       
       // Waving Haori (Kimono coat) Left, Right, & Back pivot segments
       const backFlapPivot = new THREE.Group();
