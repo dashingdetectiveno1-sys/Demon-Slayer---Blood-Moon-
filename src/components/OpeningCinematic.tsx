@@ -9,18 +9,31 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
     const [idx, setIdx] = useState(0);
     const [chars, setChars] = useState(0);
     const [leaving, setLeaving] = useState(false);
+    const [ready, setReady] = useState<boolean[]>(() => OPENING_FRAMES.map(() => false));
     const timerRef = useRef<number | null>(null);
     const frame = OPENING_FRAMES[idx];
 
-    // Preload every frame image up front so crossfades never hit the network
+    // Preload every frame image up front so crossfades never hit the network.
+    // Each frame's caption/VO waits for its own image (per-frame gate); on a
+    // load error we mark ready anyway so the beat still plays (pre-fix behavior).
     useEffect(() => {
-        OPENING_FRAMES.forEach(f => { const im = new Image(); im.src = f.img; });
+        const mark = (i: number) => setReady(r => (r[i] ? r : r.map((v, j) => (j === i ? true : v))));
+        OPENING_FRAMES.forEach((f, i) => {
+            const im = new Image();
+            im.onload = () => mark(i);
+            im.onerror = () => mark(i);
+            im.src = f.img;
+            if (im.complete) mark(i); // already cached
+        });
     }, []);
+
+    const curReady = ready[idx];
 
     // Play the frame's VO, then schedule the advance at clip end (or fallback).
     useEffect(() => {
         setChars(0);
         if (timerRef.current) window.clearTimeout(timerRef.current);
+        if (!curReady) return; // hold the beat until this frame's art is visible
         const f = OPENING_FRAMES[idx];
         const scheduleNext = (ms: number) => {
             timerRef.current = window.setTimeout(() => {
@@ -48,17 +61,19 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
             scheduleNext(f.fallbackMs);
         }
         return () => { if (timerRef.current) window.clearTimeout(timerRef.current); };
-    }, [idx]);
+    }, [idx, curReady]);
 
-    // Typewriter caption
+    // Typewriter caption (waits for the frame's image with the VO)
     useEffect(() => {
+        if (!curReady) return;
         const t = window.setInterval(() => {
             setChars(c => (c < frame.text.length ? c + 1 : c));
         }, 28);
         return () => window.clearInterval(t);
-    }, [idx, frame.text.length]);
+    }, [idx, frame.text.length, curReady]);
 
     const advance = () => {
+        if (!curReady) return; // frame still loading: nothing to complete or advance
         if (chars < frame.text.length) { setChars(frame.text.length); return; }
         audioManager.stopVoices(); // cut the current VO so voices never overlap
         if (idx + 1 >= OPENING_FRAMES.length) { onFinish(); return; }
@@ -77,7 +92,7 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [chars, idx, frame.text.length]);
+    }, [chars, idx, frame.text.length, curReady]);
 
     const durMs = frame.fallbackMs + 4000; // generous transform window; the timer cuts it
     const kbFrom = `scale(${frame.kb.scale[0]}) translate(${frame.kb.x[0]}%, ${frame.kb.y[0]}%)`;
@@ -94,7 +109,7 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
                     <div
                         key={i}
                         className="absolute inset-0 overflow-hidden transition-opacity duration-1000"
-                        style={{ opacity: i === idx ? 1 : 0, zIndex: i === idx ? 2 : 1 }}
+                        style={{ opacity: i === idx && ready[i] ? 1 : 0, zIndex: i === idx ? 2 : 1 }}
                     >
                         {i === idx ? (
                             <img
@@ -103,7 +118,7 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
                                 draggable={false}
                                 className="w-full h-full object-cover"
                                 style={{
-                                    animation: `kbMove-${idx} ${durMs}ms linear forwards`,
+                                    animation: curReady ? `kbMove-${idx} ${durMs}ms linear forwards` : 'none',
                                 }}
                             />
                         ) : (
@@ -136,7 +151,10 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
             </button>
 
             {/* caption */}
-            <div className="absolute bottom-0 inset-x-0 z-[6] px-6 pb-8 pointer-events-none">
+            <div
+                className="absolute bottom-0 inset-x-0 z-[6] px-6 pb-8 pointer-events-none transition-opacity duration-500"
+                style={{ opacity: curReady ? 1 : 0 }}
+            >
                 <div className="max-w-xl mx-auto">
                     <div className="inline-block px-2 py-0.5 mb-2 border border-red-500/40 rounded text-[10px] font-mono tracking-[0.3em] text-red-400 uppercase bg-black/50">
                         {frame.speaker}
