@@ -547,6 +547,8 @@ class SoundEngine {
   // ---- Anime voice bus (real voice clips in /voices/*.mp3) ----
   voiceGain: GainNode | null = null;
   voiceBuffers: Record<string, AudioBuffer | null> = {};
+  private activeVoiceNodes: { src: AudioBufferSourceNode; gain: GainNode }[] = [];
+  private preDuckMusic: number | null = null;
   voiceLastPlayed: Record<string, number> = {};
   activeVoices = 0;
 
@@ -588,13 +590,38 @@ class SoundEngine {
     if (this.musicGain) {
       const t = this.ctx.currentTime;
       const cur = this.musicGain.gain.value;
+      this.preDuckMusic = cur;
       this.musicGain.gain.cancelScheduledValues(t);
       this.musicGain.gain.setValueAtTime(cur, t);
       this.musicGain.gain.linearRampToValueAtTime(Math.max(cur * 0.65, 0.001), t + 0.06);
       this.musicGain.gain.linearRampToValueAtTime(cur, t + buf.duration + 0.35);
     }
-    src.onended = () => { this.activeVoices--; };
+    this.activeVoiceNodes.push({ src, gain: g });
+    src.onended = () => {
+      this.activeVoices--;
+      this.activeVoiceNodes = this.activeVoiceNodes.filter(v => v.src !== src);
+    };
     src.start();
+  }
+
+  // Stop all currently-playing voice clips with a fast fade (cutscene skip/advance).
+  stopVoices(fadeSec = 0.15) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (const v of this.activeVoiceNodes) {
+      try {
+        v.gain.gain.cancelScheduledValues(t);
+        v.gain.gain.setValueAtTime(Math.max(v.gain.gain.value, 0.0001), t);
+        v.gain.gain.linearRampToValueAtTime(0.0001, t + fadeSec);
+        v.src.stop(t + fadeSec + 0.02);
+      } catch { /* already stopped */ }
+    }
+    this.activeVoiceNodes = [];
+    if (this.musicGain && this.preDuckMusic != null) {
+      this.musicGain.gain.cancelScheduledValues(t);
+      this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, t);
+      this.musicGain.gain.linearRampToValueAtTime(this.preDuckMusic, t + 0.25);
+    }
   }
 
   playVoiceRandom(names: string[], opts: { volume?: number; chance?: number; cooldown?: number } = {}) {

@@ -60,11 +60,13 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
 
     const advance = () => {
         if (chars < frame.text.length) { setChars(frame.text.length); return; }
+        audioManager.stopVoices(); // cut the current VO so voices never overlap
         if (idx + 1 >= OPENING_FRAMES.length) { onFinish(); return; }
         setIdx(i => i + 1);
     };
 
     const skip = () => {
+        audioManager.stopVoices();
         setLeaving(true);
         window.setTimeout(onFinish, 450);
     };
@@ -75,7 +77,7 @@ const OpeningCinematic: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    });
+    }, [chars, idx, frame.text.length]);
 
     const durMs = frame.fallbackMs + 4000; // generous transform window; the timer cuts it
     const kbFrom = `scale(${frame.kb.scale[0]}) translate(${frame.kb.x[0]}%, ${frame.kb.y[0]}%)`;
