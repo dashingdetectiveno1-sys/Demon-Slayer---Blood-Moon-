@@ -6917,4 +6917,11 @@ export const GameWorld: React.FC = () => {
             <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
             <div>
               <div className="font-bold uppercase tracking-wider text-green-400 font-mono">Progression Secured</div>
-     
+              <div className="text-xs text-blue-300">Your journey was safely sealed. It can be resumed anytime!</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
