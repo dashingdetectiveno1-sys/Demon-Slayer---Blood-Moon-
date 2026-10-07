@@ -564,6 +564,7 @@ export const GameWorld: React.FC = () => {
   useEffect(() => {
       stateRef.current.activeCutscene = cutsceneId;
       stateRef.current.cutsceneStepIdx = cutsceneLineIdx;
+      if (cutsceneId && cutsceneLineIdx === 0) (audioManager as any).playStinger?.();
   }, [cutsceneId, cutsceneLineIdx]);
   useEffect(() => {
       stateRef.current.dummyHits = dummyHits;
@@ -2516,8 +2517,8 @@ export const GameWorld: React.FC = () => {
             for(let i=0; i< (isMobileDevice?15:30); i++){
                 const demonTypeRand = Math.random();
                 let typeStr = 'normal';
-                if (demonTypeRand > 0.85) typeStr = 'silk_spawn';
-                else if (demonTypeRand > 0.95) typeStr = 'greater_spawn';
+                if (demonTypeRand > 0.95) typeStr = 'greater_spawn';
+                else if (demonTypeRand > 0.85) typeStr = 'silk_spawn';
                 
                 const e = buildEnemy(typeStr);
                 const angle = Math.random() * Math.PI * 2; const dist = 20 + Math.random() * 60;
@@ -2618,6 +2619,7 @@ export const GameWorld: React.FC = () => {
             const bossType = bossVariations[Math.floor(Math.random()*bossVariations.length)];
             const boss = buildEnemy(bossType);
             boss.group.position.set(0, 0, -20);
+            audioManager.playVoice('boss_roar', { volume: 1.0, cooldown: 10000 });
             environmentGrp.add(boss.group);
             stateRef.current.enemies.push({ 
                 id:'boss', group: boss.group, type:'boss', 
@@ -2748,6 +2750,7 @@ export const GameWorld: React.FC = () => {
             else if (s.comboWindow > 0) { s.attackPhase++; }
             s.attackTimer = 0; s.attackType = 'normal'; s.comboWindow = 0;
             audioManager.playSlash();
+            audioManager.playVoiceRandom(['atk_kiai_1','atk_kiai_2','atk_kiai_3'], { chance: 0.55, cooldown: 400 });
             keys['j'] = false; s.input.attack = false; // consume trigger
         }
         
@@ -2757,6 +2760,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'water'; s.stamina -= 30; s.velocity.y = 10; s.isOnFloor = false;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playWater();
+            audioManager.playVoice('skill_water', { cooldown: 1200 });
             keys['o'] = false; s.input.skill1 = false;
         }
 
@@ -2765,6 +2769,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'fire'; s.stamina -= 50;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playFire();
+            audioManager.playVoice('skill_fire', { cooldown: 1200 });
             keys['l'] = false; s.input.skill2 = false;
         }
 
@@ -2773,6 +2778,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'thunder'; s.stamina -= 40;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playThunder();
+            audioManager.playVoice('skill_thunder', { cooldown: 1200 });
             keys['u'] = false; s.input.skill3 = false;
         }
 
@@ -2782,6 +2788,7 @@ export const GameWorld: React.FC = () => {
             s.invulnTimer = Math.max(s.invulnTimer, 0.4); // I-frames
             if (s.questsProgress) s.questsProgress.dashes = (s.questsProgress.dashes || 0) + 1;
             audioManager.playDash();
+            audioManager.playVoiceRandom(['dash_voice'], { chance: 0.4, cooldown: 900 });
             spawnParticles(s.position, 0xffffff, 15, 'wind');
             keys['k'] = false; keys['shift'] = false; s.input.dash = false;
         }
@@ -3173,7 +3180,7 @@ export const GameWorld: React.FC = () => {
               if (s.attackTimer >= 0.25) { s.comboWindow = 0.3; s.isAttacking = false; }
           }
           else if (s.attackType === 'water') {
-              // Water Wheel (Jump spin)
+              // Riptide (jump spin)
               playerObj.group.rotation.x = phase * Math.PI * 4;
               playerObj.rArm.rotation.x = Math.PI;
               dmgMult = 2.0; range = 4.0;
@@ -3333,6 +3340,7 @@ export const GameWorld: React.FC = () => {
                       }
                   } else if (isCrit) {
                       audioManager.playCrit();
+                      audioManager.playVoiceRandom(['crit_shout'], { chance: 0.4, cooldown: 2500 });
                       s.hitStopTimer = 0.08;
                       s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.5);
                   } else {
@@ -3727,6 +3735,7 @@ export const GameWorld: React.FC = () => {
                       s.velocity.add(s.position.clone().sub(e.group.position).normalize().multiplyScalar(15));
                       spawnParticles(s.position, 0xff0000, 20, 'blood');
                       audioManager.playDamage();
+                      audioManager.playVoiceRandom(['hurt_1','hurt_2'], { cooldown: 800 });
                       s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.8);
                       s.hitStopTimer = 0.1;
                   }
@@ -3735,6 +3744,7 @@ export const GameWorld: React.FC = () => {
                   s.velocity.add(s.position.clone().sub(e.group.position).normalize().multiplyScalar(15));
                   spawnParticles(s.position, 0xff0000, 20, 'blood');
                   audioManager.playDamage();
+                  audioManager.playVoiceRandom(['hurt_1','hurt_2'], { cooldown: 800 });
                   s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.8);
                   s.hitStopTimer = 0.1;
               }
@@ -3781,6 +3791,7 @@ export const GameWorld: React.FC = () => {
           s.slashDamageMult = (s.slashDamageMult || 1.0) * 1.05; // 5% base attack increase per level
           if (s.rankIdx < RANKS.length-1) s.rankIdx++;
           audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
           spawnParticles(s.position, 0xffff00, 100, 'ash'); // level up burst
       }
 
@@ -3793,11 +3804,11 @@ export const GameWorld: React.FC = () => {
               setTipModal(s.activeTip);
           } else if (s.stats.dashes > 0 && !s.tips.water) {
               s.tips.water = true;
-              s.activeTip = { title: 'Water Wheel', text: 'Concentrate your Spirit! Press O (or Skill 1). Costs 30 Spirit. A powerful area attack to strike multiple foes around you.' };
+              s.activeTip = { title: 'Riptide', text: 'Concentrate your Spirit! Press O (or Skill 1). Costs 30 Spirit. A powerful area attack to strike multiple foes around you.' };
               setTipModal(s.activeTip);
           } else if (s.stats.water > 0 && !s.tips.fire) {
               s.tips.fire = true;
-              s.activeTip = { title: 'Fire God', text: 'Unleash your true potential. Press L (or Skill 2). Costs 50 Spirit. A devastating vertical strike that cleaves through strong enemies.' };
+              s.activeTip = { title: 'Blood Moon Dance', text: 'Unleash your true potential. Press L (or Skill 2). Costs 50 Spirit. A devastating vertical strike that cleaves through strong enemies.' };
               setTipModal(s.activeTip);
           }
       }
@@ -4289,6 +4300,11 @@ export const GameWorld: React.FC = () => {
                   tCamPos.copy(s.position).add(new THREE.Vector3(0, 3, 7)); tLook.copy(s.position).add(new THREE.Vector3(0, 1.2, -3));
               }
           }
+          // Cinematic slow push-in within each cutscene beat
+          const beatKey = s.activeCutscene + '|' + (s.cutsceneStepIdx || 0);
+          if ((s as any).__csBeat !== beatKey) { (s as any).__csBeat = beatKey; (s as any).__csDrift = 0; }
+          (s as any).__csDrift = Math.min(((s as any).__csDrift || 0) + realDelta * 0.22, 2.2);
+          tCamPos.addScaledVector(tLook.clone().sub(tCamPos).normalize(), (s as any).__csDrift);
       }
 
       camera.position.lerp(tCamPos, 6.0 * (delta > 0 ? delta : 0.016));
@@ -4612,6 +4628,7 @@ export const GameWorld: React.FC = () => {
       setGameState('playing');
       if (isNewGame) {
           setCutsceneId('intro');
+          audioManager.playVoice('narrator_intro', { volume: 1.0 });
           setCutsceneLineIdx(0);
       }
   };
@@ -4656,6 +4673,7 @@ export const GameWorld: React.FC = () => {
              setCutsceneLineIdx(0);
           } else if (finishedId === 'bossWin') {
              setGameState('victory');
+             audioManager.playVoice('victory_line', { volume: 1.0 });
           }
       } else {
           setDialogLineIdx(prev => prev + 1);
@@ -4685,6 +4703,7 @@ export const GameWorld: React.FC = () => {
               s.xp -= req;
               s.level += 1;
               audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
               setTipModal({ title: "Level Up & Promotion!", text: `Congratulations! You climbed to Level ${s.level} and gained stronger stats!` });
           }
           
@@ -4694,6 +4713,7 @@ export const GameWorld: React.FC = () => {
           }));
           
           audioManager.playCrit();
+                      audioManager.playVoiceRandom(['crit_shout'], { chance: 0.4, cooldown: 2500 });
           spawnParticlesRef.current?.(s.position, 0xffff00, 30, 'thunder');
           saveGameData();
       }
@@ -5940,7 +5960,7 @@ export const GameWorld: React.FC = () => {
               merchant_sushi: { name: "Sushi Ginza Saku", proprietor: "Saku San", item: "Fatty Otoro Bluefin Sushi", flavor: "Surgical tuna slices that melt on the tongue, feeding the flow.", cost: 45, upgradeDesc: "Concentrator Feast (Instantly awards +150 Experience points)" },
               merchant_umbrella: { name: "Cedar & Silk Parasols", proprietor: "Aoi Chan", item: "Sturdy Umbrella Geta", flavor: "Ancient cedar-wood platform sandals bound by robust weather-proof hemp cords.", cost: 50, upgradeDesc: "Half Stamina cost on every evasive movement dash" },
               merchant_herbs: { name: "Moonpetal Apothecary", proprietor: "Ume", item: "Moonpetal Healing Elixir", flavor: "A dynamic purple extract brewed from rare medical moonpetal pollen.", cost: 55, upgradeDesc: "Dynamic passive health regeneration (+2.5 Health per second passively)" },
-              merchant_sake: { name: "Red Moon Distillery", proprietor: "Kiku", item: "Sacred Moon Brew", flavor: "Fierce fire-heated sacred sake crafted in high shrines during holy spring.", cost: 75, upgradeDesc: "Flame Breathing Charge (+35% ultimate attack charging speed)" }
+              merchant_sake: { name: "Red Moon Distillery", proprietor: "Kiku", item: "Sacred Moon Brew", flavor: "Fierce fire-heated sacred sake crafted in high shrines during holy spring.", cost: 75, upgradeDesc: "Crimson Charge (+35% ultimate attack charging speed)" }
           };
           
           const s = stateRef.current;
@@ -5955,7 +5975,7 @@ export const GameWorld: React.FC = () => {
               } else {
                   const romanDigits = ["I", "II", "III", "IV", "V"];
                   info.item = `Moonsteel Blade Refinement ${romanDigits[currentLevel]}`;
-                  info.upgradeDesc = `Polish and temper the steel further. Maximizes weapon dimensions, damage (+25% per level), and yields larger breathing particle trails. (Current: level ${currentLevel}/5, Damage: +${currentLevel * 25}%)`;
+                  info.upgradeDesc = `Polish and temper the steel further. Maximizes weapon dimensions, damage (+25% per level), and yields larger spirit particle trails. (Current: level ${currentLevel}/5, Damage: +${currentLevel * 25}%)`;
                   info.cost = 45 + currentLevel * 15;
               }
           }
@@ -6000,6 +6020,7 @@ export const GameWorld: React.FC = () => {
                       s.xp -= req;
                       s.level += 1;
                       audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
                       setTipModal({ title: "Level Up / Promotion!", text: `You are now Level ${s.level}!` });
                   }
               }
@@ -6036,6 +6057,7 @@ export const GameWorld: React.FC = () => {
                       s.xp -= req;
                       s.level += 1;
                       audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
                       setTipModal({ title: "Level Up & Promotion!", text: `Congratulations! You climbed to Level ${s.level} and gained stronger stats!` });
                   }
                   
@@ -6307,9 +6329,9 @@ export const GameWorld: React.FC = () => {
                 <div><strong className="text-white bg-white/10 px-1 rounded mr-2">SPC</strong> Jump</div>
                 <div><strong className="text-white bg-white/10 px-1 rounded mr-2">J</strong> Strike</div>
                 <div><strong className="text-white bg-white/10 px-1 rounded mr-2">K</strong> Dash <span className="text-gray-500">(15)</span></div>
-                <div><strong className="text-blue-400 bg-blue-900/30 px-1 rounded mr-2">O</strong> Water Wheel <span className="text-gray-500">(30)</span></div>
-                <div><strong className="text-red-400 bg-red-900/30 px-1 rounded mr-2">L</strong> Fire God <span className="text-gray-500">(50)</span></div>
-                <div className="col-span-2"><strong className="text-amber-400 bg-amber-950/30 px-1 rounded mr-2">U</strong> God Speed <span className="text-gray-500">(40)</span></div>
+                <div><strong className="text-blue-400 bg-blue-900/30 px-1 rounded mr-2">O</strong> Riptide <span className="text-gray-500">(30)</span></div>
+                <div><strong className="text-red-400 bg-red-900/30 px-1 rounded mr-2">L</strong> Blood Moon Dance <span className="text-gray-500">(50)</span></div>
+                <div className="col-span-2"><strong className="text-amber-400 bg-amber-950/30 px-1 rounded mr-2">U</strong> Stormstep <span className="text-gray-500">(40)</span></div>
                 <div className="col-span-2 pt-2 border-t border-white/5"><strong className="text-yellow-400 bg-yellow-900/30 px-1 rounded mr-2">E</strong> Interact</div>
             </div>
          </div>
