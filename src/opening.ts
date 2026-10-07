@@ -24,9 +24,9 @@ export const OPENING_FRAMES: OpeningFrame[] = [
         img: 'opening/f2.jpg',
         vo: 'narr_intro',
         speaker: 'Narrator',
-        text: 'Three nights ago, the threads came over the wall. No scream. No broken lock. Just an empty futon, and one small sandal in the snow.',
+        text: 'This village has stood beneath the mountain for two hundred years. Its people do not fear the dark. Tonight, every door is barred.',
         kb: { scale: [1.06, 1.14], x: [-2.5, 2.5], y: [0, 0] },
-        fallbackMs: 13500,
+        fallbackMs: 21000,
     },
     {
         img: 'opening/f3.jpg',
