@@ -297,6 +297,9 @@ export const GameWorld: React.FC = () => {
   const spawnParticlesRef = useRef<any>(null);
   const advanceDialogRef = useRef<any>(null);
   const [mobileMode, setMobileMode] = useState<'auto' | true | false>('auto');
+  const isTouchPhone = useRef((('ontouchstart' in window) || navigator.maxTouchPoints > 0) && /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent)).current;
+  const [isPortrait, setIsPortrait] = useState(() => window.innerHeight > window.innerWidth);
+  const fsRequestedRef = useRef(false);
   
   // Game UI States
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameover' | 'victory' | 'loading' | 'opening'>('menu');
@@ -645,13 +648,35 @@ export const GameWorld: React.FC = () => {
     }
   }, [mobileMode]);
 
+  // Rotate-to-landscape gate: phones only, gameplay only. Desktop untouched.
+  const rotateGate = isTouchPhone && isPortrait && gameState === 'playing';
+  useEffect(() => {
+    const onR = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', onR);
+    window.addEventListener('orientationchange', onR);
+    return () => { window.removeEventListener('resize', onR); window.removeEventListener('orientationchange', onR); };
+  }, []);
+  useEffect(() => { stateRef.current.rotateGate = rotateGate; }, [rotateGate]);
+  useEffect(() => { stateRef.current.menuOpenSync = menuOpen; }, [menuOpen]);
+  useEffect(() => { stateRef.current.activeShopSync = activeShop; }, [activeShop]);
+  useEffect(() => {
+    if (gameState !== 'playing' && fsRequestedRef.current) {
+      fsRequestedRef.current = false;
+      try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch {}
+    }
+  }, [gameState]);
+  const switchToLandscape = async () => {
+    try { if (document.documentElement.requestFullscreen) { await document.documentElement.requestFullscreen(); fsRequestedRef.current = true; } } catch {}
+    try { await (screen.orientation as any).lock('landscape'); } catch {}
+  };
+
   // Main 3D Engine Initialization
   useEffect(() => {
     if (!canvasRef.current || !mountRef.current) return;
     let width = mountRef.current.clientWidth;
     let height = mountRef.current.clientHeight;
 
-    const isMobileDevice = window.innerWidth < 768;
+    const isMobileDevice = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
@@ -694,7 +719,7 @@ export const GameWorld: React.FC = () => {
     ssaoPass.maxDistance = 0.1;
     
     composer.addPass(renderPass);
-    composer.addPass(ssaoPass);
+    if (!isMobileDevice) composer.addPass(ssaoPass); // SSAO halves fps on mid-range phone GPUs; bloom carries the look
     composer.addPass(bloomPass);
     composer.addPass(outputPass);
 
@@ -2083,6 +2108,10 @@ export const GameWorld: React.FC = () => {
             const matLantern = new THREE.MeshStandardMaterial({color: 0xff1100, emissive: 0xff1100, emissiveIntensity: 0.9});
             const matWalkway = new THREE.MeshStandardMaterial({color: 0x4a3422, roughness: 1.0});
 
+            // Seeded PRNG: organic layout variance, identical on every device/load
+            let seed = 20261008;
+            const rand = () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+
             // Grid size parameters
             const numBlocksX = 3; // 3 blocks wide
             const numBlocksZ = 4; // 4 blocks long
@@ -2151,15 +2180,43 @@ export const GameWorld: React.FC = () => {
                     ];
 
                     houseOffsets.forEach((ho, idx) => {
-                        const hx = blockCx + ho.x;
-                        const hz = blockCz + ho.z;
+                        // Organic village: jittered placement, slight rotation/scale variance,
+                        // occasional empty lot. Colliders and lanterns follow the jitter.
+                        const skipLot = idx !== 0 && rand() < 0.14; // never empty the whole block
+                        const jx = (rand() - 0.5) * 3.2;
+                        const jz = (rand() - 0.5) * 3.2;
+                        const jrot = (rand() - 0.5) * 0.16;
+                        const jscale = 0.92 + rand() * 0.2;
+                        const hx = blockCx + ho.x + jx;
+                        const hz = blockCz + ho.z + jz;
 
                         // Create two stories
                         for(let story=0; story<2; story++) {
                             const sy = story * 3.5;
+                            if (skipLot) { // collapsed matrices: invisible lot, no collider
+                                dummy.scale.set(0,0,0); dummy.updateMatrix();
+                                instBase.setMatrixAt(hIdx, dummy.matrix);
+                                instBackWall.setMatrixAt(hIdx, dummy.matrix);
+                                instSideWall.setMatrixAt(hIdx*2, dummy.matrix);
+                                instSideWall.setMatrixAt(hIdx*2+1, dummy.matrix);
+                                instShoji.setMatrixAt(hIdx, dummy.matrix);
+                                instPorch.setMatrixAt(hIdx, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4+1, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4+2, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4+3, dummy.matrix);
+                                instRoof.setMatrixAt(hIdx, dummy.matrix);
+                                instHLantern.setMatrixAt(hIdx*2, dummy.matrix);
+                                instHLantern.setMatrixAt(hIdx*2+1, dummy.matrix);
+                                dummy.scale.set(1,1,1);
+                                hIdx++;
+                                continue;
+                            }
+                            dummy.scale.set(jscale, jscale, jscale);
                             dummy.position.set(hx, 0, hz);
-                            dummy.rotation.y = ho.rot;
+                            dummy.rotation.y = ho.rot + jrot;
                             dummy.updateMatrix();
+                            dummy.scale.set(1,1,1);
                             const bm = dummy.matrix.clone();
 
                             const applyLocal = (px:number, py:number, pz:number, ry:number=0) => {
@@ -2199,7 +2256,7 @@ export const GameWorld: React.FC = () => {
                             hIdx++;
                         }
                         
-                        colliders.push({box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(hx, 5, hz), new THREE.Vector3(9, 10, 9))});
+                        if (!skipLot) colliders.push({box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(hx, 5, hz), new THREE.Vector3(9 * jscale, 10, 9 * jscale))});
                     });
                 }
             }
@@ -2940,7 +2997,7 @@ export const GameWorld: React.FC = () => {
       // State transition checks
       if (currentLoadedStage !== s.stage) { loadStage(s.stage); }
       
-      let isPaused = s.activeDialog !== null || s.activeCutscene !== null || menuOpen || s.activeTip !== null || activeShop !== null;
+      let isPaused = s.activeDialog !== null || s.activeCutscene !== null || s.menuOpenSync === true || s.activeTip !== null || s.activeShopSync != null || s.rotateGate === true; // React state mirrored into stateRef - the engine effect's own closure is stale once running
       
       // Update persistent updates
       if (!isPaused && s.health > 0) {
@@ -4890,7 +4947,7 @@ export const GameWorld: React.FC = () => {
       const targetBloomStrength = 0.5 + (staminaRatio * 2.5) + (pulse * staminaRatio * 1.5);
       bloomPass.strength = THREE.MathUtils.lerp(bloomPass.strength, targetBloomStrength, delta * 3.0);
 
-      composer.render();
+      if (!s.rotateGate) composer.render(); // rotate gate covers the canvas - save the GPU
     };
     
     animId = requestAnimationFrame(gameLoop);
@@ -6732,6 +6789,23 @@ export const GameWorld: React.FC = () => {
       {/* --- Game Over & Victory States --- */}
       {gameState === 'opening' && (
       <OpeningCinematic onFinish={finishOpening} />
+      )}
+
+      {rotateGate && (
+        <div className="absolute inset-0 z-[100] bg-[#050101] flex flex-col items-center justify-center gap-6 p-8 text-center select-none">
+          <style>{`@keyframes cmRotatePhone { 0%,25% { transform: rotate(0deg); } 65%,100% { transform: rotate(90deg); } }`}</style>
+          <div className="relative flex items-center justify-center h-24 w-24">
+            <div className="w-10 h-[68px] border-2 border-red-500 rounded-lg shadow-[0_0_24px_rgba(255,0,0,0.45)]" style={{ animation: 'cmRotatePhone 1.8s ease-in-out infinite' }} />
+          </div>
+          <div className="text-red-500 font-mono text-sm tracking-[0.35em] uppercase font-bold">Rotate to Landscape</div>
+          <p className="text-gray-400 text-xs font-mono tracking-wider max-w-[260px] leading-relaxed">Crimson Moon is meant to be played sideways.</p>
+          <button
+            onClick={(e) => { e.stopPropagation(); switchToLandscape(); }}
+            className="mt-2 px-6 py-3 border border-red-500/60 rounded bg-red-950/60 text-red-200 font-mono text-xs tracking-[0.3em] uppercase active:bg-red-900/70"
+          >
+            Switch to Landscape
+          </button>
+        </div>
       )}
 
       {gameState === 'gameover' && (() => {
