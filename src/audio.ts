@@ -552,7 +552,7 @@ class SoundEngine {
   voiceLastPlayed: Record<string, number> = {};
   activeVoices = 0;
 
-  static VOICE_FILES = ['atk_kiai_1','atk_kiai_2','atk_kiai_3','dash_voice','hurt_1','hurt_2','crit_shout','levelup_voice','boss_roar','narr_intro','narr_forest','narr_cavern','narr_summit','narr_midfight','narr_cocoon','narr_victory','shira_bossintro_1','shira_bossintro_2','shira_arrival','shira_death','iwato_1','iwato_2','iwato_3','iwato_4','iwato_5','iwato_memory','iwato_farewell','narr_ren','narr_climb'];
+  static VOICE_FILES = ['atk_kiai_1','atk_kiai_2','atk_kiai_3','dash_voice','hurt_1','hurt_2','crit_shout','levelup_voice','boss_roar','narr_intro','narr_forest','narr_cavern','narr_summit','narr_midfight','narr_cocoon','narr_victory','shira_bossintro_1','shira_bossintro_2','shira_arrival','shira_death','iwato_1','iwato_2','iwato_3','iwato_4','iwato_5','iwato_memory','iwato_farewell','narr_ren','narr_climb','skill_riptide','skill_blooddance','skill_stormstep'];
 
   initVoices() {
     if (!this.ctx || !this.masterGain) return;
