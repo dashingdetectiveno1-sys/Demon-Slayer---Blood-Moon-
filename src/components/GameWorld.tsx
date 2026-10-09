@@ -657,7 +657,7 @@ export const GameWorld: React.FC = () => {
     return () => { window.removeEventListener('resize', onR); window.removeEventListener('orientationchange', onR); };
   }, []);
   useEffect(() => { stateRef.current.rotateGate = rotateGate; }, [rotateGate]);
-  useEffect(() => { stateRef.current.menuOpenSync = menuOpen; }, [menuOpen]);
+  useEffect(() => { stateRef.current.menuOpenSync = menuOpen; if (menuOpen) { const inp = stateRef.current.input; if (inp) { inp.skill1 = inp.skill2 = inp.skill3 = inp.attack = inp.dash = inp.jump = inp.interact = false; inp.x = 0; inp.y = 0; } } }, [menuOpen]);
   useEffect(() => { stateRef.current.activeShopSync = activeShop; }, [activeShop]);
   useEffect(() => {
     if (gameState !== 'playing' && fsRequestedRef.current) {
@@ -2653,7 +2653,7 @@ export const GameWorld: React.FC = () => {
                 {x: 0, y: 4, z: -streetWidth*1.5 - 3, color: 0xffab47, intensity: 5.0} // Training Plaza light
             ];
             
-            lightPoints.forEach(lp => {
+            lightPoints.slice(0, isMobileDevice ? 3 : lightPoints.length).forEach(lp => {
                 const pLight = new THREE.PointLight(lp.color, lp.intensity, 18);
                 pLight.position.set(lp.x, lp.y, lp.z);
                 pLight.userData = { baseIntensity: lp.intensity, phaseOffset: Math.random() * 12 };
@@ -2964,11 +2964,26 @@ export const GameWorld: React.FC = () => {
     let lastTime = performance.now();
     let animId: number;
 
+    let dynAcc = 0, dynN = 0, dynScale = 1;
     const gameLoop = (timeNow: number) => {
       animId = requestAnimationFrame(gameLoop);
       const time = timeNow / 1000;
       let realDelta = Math.min((timeNow - lastTime) / 1000, 0.1);
       lastTime = timeNow;
+
+      // Adaptive resolution (phones only): if the GPU can't hold ~40fps, step the render scale down
+      // (1 -> 0.85 -> 0.7). Never goes back up, so no oscillation. Skipped while paused/hidden.
+      if (isMobileDevice && !(stateRef.current as any).menuOpenSync && realDelta < 0.1) {
+        dynAcc += realDelta; dynN++;
+        if (dynAcc >= 2.5) {
+          const avg = dynAcc / dynN; dynAcc = 0; dynN = 0;
+          if (avg > 0.026 && dynScale > 0.7) {
+            dynScale = dynScale === 1 ? 0.85 : 0.7;
+            renderer.setPixelRatio(dynScale); composer.setPixelRatio(dynScale);
+            renderer.setSize(width, height); composer.setSize(width, height);
+          }
+        }
+      }
 
       const s = stateRef.current;
       
@@ -3060,6 +3075,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'water'; s.stamina -= 30; s.velocity.y = 10; s.isOnFloor = false;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playWater();
+            audioManager.playVoice('skill_riptide', { volume: 1.0, cooldown: 600 });
             keys['o'] = false; s.input.skill1 = false;
         }
 
@@ -3068,6 +3084,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'fire'; s.stamina -= 50;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playFire();
+            audioManager.playVoice('skill_blooddance', { volume: 1.0, cooldown: 600 });
             keys['l'] = false; s.input.skill2 = false;
         }
 
@@ -3076,6 +3093,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'thunder'; s.stamina -= 40;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playThunder();
+            audioManager.playVoice('skill_stormstep', { volume: 1.0, cooldown: 600 });
             keys['u'] = false; s.input.skill3 = false;
         }
 
@@ -6194,17 +6212,17 @@ export const GameWorld: React.FC = () => {
       {/* --- Pause Menu Overlay --- */}
       {menuOpen && gameState === 'playing' && (
          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center">
-            <div className="w-full max-w-md bg-gray-900 border border-white/10 p-5 sm:p-8 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto mx-4">
-               <h2 className="text-2xl font-mono font-bold uppercase tracking-widest text-center mb-8 border-b border-white/10 pb-4">Paused</h2>
-               <div className="space-y-4">
-                  <button onClick={()=>setMenuOpen(false)} className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors flex items-center justify-center gap-2.5 mx-auto">
+            <div className="w-full max-w-md bg-gray-900 border border-white/10 p-5 sm:p-8 [@media(max-height:480px)]:p-3 rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto mx-4">
+               <h2 className="text-2xl [@media(max-height:480px)]:text-lg font-mono font-bold uppercase tracking-widest text-center mb-8 [@media(max-height:480px)]:mb-2 border-b border-white/10 pb-4 [@media(max-height:480px)]:pb-2">Paused</h2>
+               <div className="space-y-4 [@media(max-height:480px)]:space-y-2">
+                  <button onClick={()=>setMenuOpen(false)} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors flex items-center justify-center gap-2.5 mx-auto">
                      <CheckCircle2 className="w-4 h-4 text-green-400" /> Resume Game
                   </button>
-                  <button onClick={saveGameData} className="w-full py-4 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 rounded font-mono uppercase tracking-widest transition-all text-blue-200 flex items-center justify-center gap-2.5 mx-auto">
+                  <button onClick={saveGameData} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 rounded font-mono uppercase tracking-widest transition-all text-blue-200 flex items-center justify-center gap-2.5 mx-auto">
                      <Save className="w-4 h-4 text-blue-400" /> Save Progress
                   </button>
-                  <button onClick={() => { setEnvTime(stateRef.current.envTime); setSettingsOpen(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors">Settings</button>
-                  <button onClick={()=>{setMenuOpen(false); setGameState('menu');}} className="w-full py-4 bg-red-900/40 hover:bg-red-900/60 border border-red-500/30 rounded font-mono uppercase tracking-widest transition-colors text-red-200">Abandon Mission</button>
+                  <button onClick={() => { setEnvTime(stateRef.current.envTime); setSettingsOpen(true); }} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors">Settings</button>
+                  <button onClick={()=>{setMenuOpen(false); setGameState('menu');}} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-red-900/40 hover:bg-red-900/60 border border-red-500/30 rounded font-mono uppercase tracking-widest transition-colors text-red-200">Abandon Mission</button>
                </div>
                <div className="mt-8 pt-4 border-t border-white/5 text-center">
                   <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Rank: {RANKS[rankIndex]}</p>
