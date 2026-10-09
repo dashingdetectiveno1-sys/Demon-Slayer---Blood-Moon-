@@ -1,6 +1,6 @@
 {
-  "name": "Demon Slayer: Blood Moon",
-  "description": "An interactive 3D Demon Slayer action game: conquer Mount Natagumo, master breathing forms, and shatter Lower Moon Five's demon threads.",
+  "name": "Crimson Moon: Threads of the Weaver",
+  "description": "An original 3D anime action game: climb Mount Kurenai under a blood-red moon, master the Moonflow sword forms, and cut the Moonweaver's soul-threads.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

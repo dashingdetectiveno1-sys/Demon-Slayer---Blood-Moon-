@@ -39,6 +39,7 @@ class SoundEngine {
     this.snowGain = this.ctx.createGain();
     this.snowGain.connect(this.masterGain);
     this.snowGain.gain.value = 0;
+    this.initVoices();
   }
 
   setVolumes(master: number, music: number, sfx: number, ambient: number) {
@@ -50,6 +51,7 @@ class SoundEngine {
     if (this.masterGain && !this.isPaused) this.masterGain.gain.value = master;
     if (this.musicGain) this.musicGain.gain.value = 0.3 * music;
     if (this.sfxGain) this.sfxGain.gain.value = 0.5 * sfx;
+    if (this.voiceGain) this.voiceGain.gain.value = 0.9 * sfx;
     // Ambient volumes will be updated in the next setAmbient or we can re-evaluate it but setAmbient can just take the current state.
   }
 
@@ -447,6 +449,34 @@ class SoundEngine {
     sub.stop(t + 0.5);
   }
 
+  playStinger() {
+    if (!this.ctx || !this.sfxGain) return;
+    const t = this.ctx.currentTime;
+    // deep taiko boom
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(95, t);
+    osc.frequency.exponentialRampToValueAtTime(36, t + 1.0);
+    g.gain.setValueAtTime(0.9, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    osc.connect(g); g.connect(this.sfxGain);
+    osc.start(t); osc.stop(t + 1.5);
+    // tense detuned swell (minor second)
+    [220, 233.1].forEach((f) => {
+      const o = this.ctx!.createOscillator();
+      const og = this.ctx!.createGain();
+      const flt = this.ctx!.createBiquadFilter();
+      o.type = 'sawtooth'; o.frequency.value = f;
+      flt.type = 'lowpass'; flt.frequency.value = 800;
+      og.gain.setValueAtTime(0.0001, t);
+      og.gain.linearRampToValueAtTime(0.05, t + 0.8);
+      og.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
+      o.connect(flt); flt.connect(og); og.connect(this.sfxGain!);
+      o.start(t); o.stop(t + 2.4);
+    });
+  }
+
   setMusicTheme(theme: 'ambient' | 'battle' | 'boss' | 'none') {
     if (!this.ctx || !this.musicGain) return;
     if (this.musicInterval) clearInterval(this.musicInterval);
@@ -514,6 +544,91 @@ class SoundEngine {
 
     }, intervalMs) as any;
   }
+  // ---- Anime voice bus (real voice clips in /voices/*.mp3) ----
+  voiceGain: GainNode | null = null;
+  voiceBuffers: Record<string, AudioBuffer | null> = {};
+  private activeVoiceNodes: { src: AudioBufferSourceNode; gain: GainNode }[] = [];
+  private preDuckMusic: number | null = null;
+  voiceLastPlayed: Record<string, number> = {};
+  activeVoices = 0;
+
+  static VOICE_FILES = ['atk_kiai_1','atk_kiai_2','atk_kiai_3','dash_voice','hurt_1','hurt_2','crit_shout','levelup_voice','boss_roar','narr_intro','narr_forest','narr_cavern','narr_summit','narr_midfight','narr_cocoon','narr_victory','shira_bossintro_1','shira_bossintro_2','shira_arrival','shira_death','iwato_1','iwato_2','iwato_3','iwato_4','iwato_5','iwato_memory','iwato_farewell','narr_ren','narr_climb','skill_riptide','skill_blooddance','skill_stormstep'];
+
+  initVoices() {
+    if (!this.ctx || !this.masterGain) return;
+    if (!this.voiceGain) {
+      this.voiceGain = this.ctx.createGain();
+      this.voiceGain.connect(this.masterGain);
+      this.voiceGain.gain.value = 0.9 * this.sfxVolume;
+    }
+    for (const name of SoundEngine.VOICE_FILES) {
+      if (name in this.voiceBuffers) continue;
+      this.voiceBuffers[name] = null;
+      fetch('voices/' + name + '.mp3')
+        .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+        .then(ab => this.ctx!.decodeAudioData(ab))
+        .then(buf => { this.voiceBuffers[name] = buf; })
+        .catch(() => { this.voiceBuffers[name] = null; });
+    }
+  }
+
+  playVoice(name: string, opts: { volume?: number; cooldown?: number } = {}) {
+    if (!this.ctx || !this.voiceGain || this.isPaused) return;
+    const buf = this.voiceBuffers[name];
+    if (!buf) return; // clip missing/not loaded yet: synth SFX still plays alongside
+    const now = performance.now();
+    if (now - (this.voiceLastPlayed[name] || 0) < (opts.cooldown ?? 350)) return;
+    if (this.activeVoices >= 2) return;
+    this.voiceLastPlayed[name] = now;
+    this.activeVoices++;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const g = this.ctx.createGain();
+    g.gain.value = opts.volume ?? 1.0;
+    src.connect(g);
+    g.connect(this.voiceGain);
+    if (this.musicGain) {
+      const t = this.ctx.currentTime;
+      const cur = this.musicGain.gain.value;
+      this.preDuckMusic = cur;
+      this.musicGain.gain.cancelScheduledValues(t);
+      this.musicGain.gain.setValueAtTime(cur, t);
+      this.musicGain.gain.linearRampToValueAtTime(Math.max(cur * 0.65, 0.001), t + 0.06);
+      this.musicGain.gain.linearRampToValueAtTime(cur, t + buf.duration + 0.35);
+    }
+    this.activeVoiceNodes.push({ src, gain: g });
+    src.onended = () => {
+      this.activeVoices--;
+      this.activeVoiceNodes = this.activeVoiceNodes.filter(v => v.src !== src);
+    };
+    src.start();
+  }
+
+  // Stop all currently-playing voice clips with a fast fade (cutscene skip/advance).
+  stopVoices(fadeSec = 0.15) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (const v of this.activeVoiceNodes) {
+      try {
+        v.gain.gain.cancelScheduledValues(t);
+        v.gain.gain.setValueAtTime(Math.max(v.gain.gain.value, 0.0001), t);
+        v.gain.gain.linearRampToValueAtTime(0.0001, t + fadeSec);
+        v.src.stop(t + fadeSec + 0.02);
+      } catch { /* already stopped */ }
+    }
+    this.activeVoiceNodes = [];
+    if (this.musicGain && this.preDuckMusic != null) {
+      this.musicGain.gain.cancelScheduledValues(t);
+      this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, t);
+      this.musicGain.gain.linearRampToValueAtTime(this.preDuckMusic, t + 0.25);
+    }
+  }
+
+  playVoiceRandom(names: string[], opts: { volume?: number; chance?: number; cooldown?: number } = {}) {
+    if (Math.random() > (opts.chance ?? 1)) return;
+    this.playVoice(names[Math.floor(Math.random() * names.length)], opts);
+  }
+
 }
 
 export const audioManager = new SoundEngine();

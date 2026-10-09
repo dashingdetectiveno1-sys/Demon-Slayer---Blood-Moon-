@@ -13,11 +13,12 @@ import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 import { MobileControls } from './MobileControls';
 import { Flame, Heart, Zap, Skull, ShieldAlert, Droplets, ArrowUp, Sword, Coins, Star, Menu, X, ChevronRight, Info, ShoppingBag, Award, CheckCircle2, Lock, Unlock, Save, BookOpen, Compass, HelpCircle, Volume2, Eye, EyeOff, Navigation, Settings } from 'lucide-react';
 import { audioManager } from '../audio';
+import OpeningCinematic from './OpeningCinematic';
 import { motion, AnimatePresence } from 'motion/react';
 
-const RANKS = ['Mizunoto', 'Mizunoe', 'Kanoto', 'Kanoe', 'Tsuchinoto', 'Tsuchinoe', 'Hinoto', 'Hinoe', 'Kinoto', 'Kinoe', 'Hashira'];
+const RANKS = ['New Moon', 'Crescent', 'Quarter', 'Gibbous', 'Full Moon', 'Red Crescent', 'Red Quarter', 'Red Gibbous', 'Blood Moon', 'Eclipse'];
 
-const OBFUSCATION_SALT = "kagurabachi_spirit_99";
+const OBFUSCATION_SALT = "weavers_peak_77";
 
 function obfuscateData(obj: any): string {
     const json = JSON.stringify(obj);
@@ -111,99 +112,102 @@ const ComboCounter = ({ count }: { count: number }) => {
 
 const DIALOGUES: Record<string, DialogLine[]> = {
   master_need_training: [
-    { speaker: 'Master Urokodaki', text: 'You felt it too. The moon swells red as a wound, and the wisteria at the gate is wilting under its light. Something on that mountain is feeding.', mood: 'calm' },
-    { speaker: 'Master Urokodaki', text: 'Three nights ago the threads came over the wall and took little Yae from her bed. No scream. No broken lock. Just one small sandal in the snow. She is seven years old, Tanjiro.', mood: 'urgent' },
-    { speaker: 'Master Urokodaki', text: 'Before I open that gate, show me the water still runs through you. Three clean strikes on the oak dummy. Breathe first. Move second.', mood: 'calm' },
+    { speaker: 'Master Iwato', text: 'You felt it too. The moon swells red as a wound, and the moonpetals at the gate are wilting under its light. Something on that mountain is feeding.', mood: 'calm' },
+    { speaker: 'Master Iwato', text: 'Three nights ago the threads came over the wall and took little Yae from her bed. No scream. No broken lock. Just one small sandal in the snow. She is seven years old, Ren.', mood: 'urgent' },
+    { speaker: 'Master Iwato', text: 'Before I open that gate, show me the water still runs through you. Three clean strikes on the oak dummy. Breathe first. Move second.', mood: 'calm' },
     { speaker: 'You', text: 'Yes, Master. Three strikes. Then I am going up that mountain to bring her home.', mood: 'serious' }
   ],
   villageIntro: [
-    { speaker: 'Master Urokodaki', text: 'Good. The water remembers you. Listen once more: the demon up there calls itself Rui. It does not simply eat people. It weaves them - winds their souls into silk and calls it a family.', mood: 'calm' },
-    { speaker: 'Master Urokodaki', text: 'Three sacred cocoons anchor its power in the forest depths. Cut them, and its skin becomes mortal. Leave them, and your blade slides off like rain off a roof.', mood: 'urgent' },
-    { speaker: 'You', text: 'Cut the cocoons. Free the souls. Bring Yae home. Total concentration... Water Breathing!', mood: 'serious' }
+    { speaker: 'Master Iwato', text: 'Good. The water remembers you. Listen once more: the weaver up there calls herself Shira. She does not simply eat people. She weaves them - winds their souls into silk and calls it a family.', mood: 'calm' },
+    { speaker: 'Master Iwato', text: 'Three sacred cocoons anchor her power in the forest depths. Cut them, and her skin becomes mortal. Leave them, and your blade slides off like rain off a roof.', mood: 'urgent' },
+    { speaker: 'You', text: 'Cut the cocoons. Free the souls. Bring Yae home. Full moon focus... Moonflow!', mood: 'serious' }
   ],
   caveIntro: [
     { speaker: 'Narrator', text: 'The cavern exhales rot and old incense. Cocoons hang from the dark like fruit left too long on the branch. Some of them are still breathing.', mood: 'sinister' },
-    { speaker: 'Kasugai Crow', text: 'Caw! Two were still warm when I scouted! Cut the silk, not the soul! Gently! Caw!', mood: 'urgent' },
-    { speaker: 'You', text: 'Nobody turns to thread while I am still standing. Water Breathing - Tenth Form: Constant Flux!', mood: 'serious' }
+    { speaker: 'Shrine Crow', text: 'Caw! Two were still warm when I scouted! Cut the silk, not the soul! Gently! Caw!', mood: 'urgent' },
+    { speaker: 'You', text: 'Nobody turns to thread while I am still standing. Moonflow - Final Form: Endless Tide!', mood: 'serious' }
   ],
   peakArrival: [
     { speaker: 'Narrator', text: 'The snow up here falls red. The Blood Moon hangs close enough to watch it pulse. At the summit, the shrine bells ring with no hands on the rope.', mood: 'sinister' },
-    { speaker: 'You', text: 'My breath comes out white and thin. Stay with me, Nezuko. One more climb. This mountain ends tonight.', mood: 'serious' },
-    { speaker: 'Master Urokodaki (Memory)', text: 'A blade is only iron, boy. The thing that cuts is the reason you refuse to stop. Remember that at the top.', mood: 'calm' }
+    { speaker: 'You', text: 'My breath comes out white and thin. Stay with me, Hana. One more climb. This mountain ends tonight.', mood: 'serious' },
+    { speaker: 'Master Iwato (Memory)', text: 'A blade is only iron, boy. The thing that cuts is the reason you refuse to stop. Remember that at the top.', mood: 'calm' }
   ],
   villager_1: [
-    { speaker: 'Aiko (Florist)', text: 'The wisteria has not wilted once in my lifetime, slayer. Not once. It started the night that child vanished. The flowers know what is up there.', mood: 'sad' },
+    { speaker: 'Aiko (Florist)', text: 'The moonpetals have not wilted once in my lifetime, warden. Not once. It started the night that child vanished. The flowers know what is up there.', mood: 'sad' },
     { speaker: 'You', text: 'Keep the blooms alive, Aiko. However dim they burn, that purple keeps every door in this village shut to him.', mood: 'calm' }
   ],
   villager_2: [
-    { speaker: 'Saburo (Old Villager)', text: 'I survived the last red moon, sixty years gone. They took my brother. Wound him in silk like thread on a spool. Some nights I still hear him in there, slayer. Still alive.', mood: 'sad' },
+    { speaker: 'Saburo (Old Villager)', text: 'I survived the last red moon, sixty years gone. They took my brother. Wound him in silk like thread on a spool. Some nights I still hear him in there, warden. Still alive.', mood: 'sad' },
     { speaker: 'You', text: 'Then tonight I cut every spool on that mountain. If your brother is in there, Saburo, he is coming home.', mood: 'serious' }
   ],
   villager_3: [
-    { speaker: 'Elder Zenzo (Monk)', text: 'Three cocoons hang in the deep forest, fed by stolen souls. They are his shield, his larder, his family. Pity him if you must, young slayer. Pity the people inside them first.', mood: 'calm' },
+    { speaker: 'Elder Zenzo (Monk)', text: 'Three cocoons hang in the deep forest, fed by stolen souls. They are her shield, her larder, her family. Pity her if you must, young blade. Pity the people inside them first.', mood: 'calm' },
     { speaker: 'You', text: 'Three cocoons. I will find them all, Elder. Mark my blade.', mood: 'serious' }
   ],
   villager_4: [
-    { speaker: 'Kanao Tsuyuri', text: 'Tanjiro. Chain your strikes - one breath, one flow, no pause between cuts. The longer the flow holds, the harder each cut lands. Rui will try to break your rhythm. Do not let him.', mood: 'calm' },
-    { speaker: 'You', text: 'One breath, unbroken. Watch me, Kanao.', mood: 'excited' }
+    { speaker: 'Miyu', text: 'Ren. Chain your strikes - one breath, one flow, no pause between cuts. The longer the flow holds, the harder each cut lands. Shira will try to break your rhythm. Do not let her.', mood: 'calm' },
+    { speaker: 'You', text: 'One breath, unbroken. Watch me, Miyu.', mood: 'excited' }
   ],
   villager_5: [
-    { speaker: 'Miyako (Shrine Maiden)', text: 'That shrine kept this mountain quiet for three hundred years. Now red threads choke the offering ropes and the bell rings backwards. Burn his webs out of my gods\' house, slayer. Please.', mood: 'serious' },
-    { speaker: 'You', text: 'By moonset, the only fire left on that mountain will be mine. I swear it on the Hinokami Kagura.', mood: 'excited' }
+    { speaker: 'Miyako (Shrine Maiden)', text: 'That shrine kept this mountain quiet for three hundred years. Now red threads choke the offering ropes and the bell rings backwards. Burn her webs out of my gods\' house, warden. Please.', mood: 'serious' },
+    { speaker: 'You', text: 'By moonset, the only fire left on that mountain will be mine. I swear it on the Blood Moon Dance.', mood: 'excited' }
   ],
-  slayer_1: [
-    { speaker: 'Guard Genya', text: 'Gates stay barred until Urokodaki-sama signs off on your stance. Rules keep corpses off my conscience. Three strikes on the dummy. Make them clean.', mood: 'angry' }
+  warden_1: [
+    { speaker: 'Guard Daigo', text: 'Gates stay barred until Iwato-sama signs off on your stance. Rules keep corpses off my conscience. Three strikes on the dummy. Make them clean.', mood: 'angry' }
   ],
-  slayer_2: [
-    { speaker: 'Guard Inosuke', text: 'HAH! Smell that? Spider stink! My blades are screaming for it! Carve up some bugs, slayer - first to a hundred kills buys the rice!', mood: 'excited' }
+  warden_2: [
+    { speaker: 'Guard Takeru', text: 'HAH! Smell that? Spider stink! My blades are screaming for it! Carve up some bugs, warden - first to a hundred kills buys the rice!', mood: 'excited' }
   ],
-  slayer_3: [
-    { speaker: 'Guard Zenitsu', text: 'D-did you hear that? The bamboo just clicked. Like fingers. What if there is a spider the size of a HOUSE up there right now? You will protect me, right? Tanjiro? RIGHT?', mood: 'sad' }
+  warden_3: [
+    { speaker: 'Guard Sora', text: 'D-did you hear that? The bamboo just clicked. Like fingers. What if there is a spider the size of a HOUSE up there right now? You will protect me, right? Ren? RIGHT?', mood: 'sad' }
   ],
   forestWin: [
-    { speaker: 'Kasugai Crow', text: 'Caw! Forest spawn shredded! But the threads pull two ways - the cavern breathes below, the peak freezes above! Caw!', mood: 'urgent' },
-    { speaker: 'You', text: 'Cavern first. Nobody stays breathing silk while I climb past. Then the peak. Then Rui.', mood: 'serious' }
+    { speaker: 'Shrine Crow', text: 'Caw! Forest spawn shredded! But the threads pull two ways - the cavern breathes below, the peak freezes above! Caw!', mood: 'urgent' },
+    { speaker: 'You', text: 'Cavern first. Nobody stays breathing silk while I climb past. Then the peak. Then Shira.', mood: 'serious' }
   ],
   caveWin: [
     { speaker: 'Narrator', text: 'The last cocoon splits and its mist dissolves into nothing. From inside: cold air, old tears, and a lullaby finally, finally stopped.', mood: 'calm' },
-    { speaker: 'You', text: 'Rest now. All of you. One climb left. I am coming, Rui.', mood: 'serious' }
+    { speaker: 'You', text: 'Rest now. All of you. One climb left. I am coming, Shira.', mood: 'serious' }
   ],
   bossIntro: [
-    { speaker: 'Rui (Spider Demon)', text: 'You smell of warm hearths. Of someone waiting at home. I had that once. Now I spin it from the people of your village. Join my family, slayer. I will even love you.', mood: 'sinister' },
-    { speaker: 'You', text: 'Love is not something you wind around a spool, Rui. Let them go. All of them. Then we will talk about what you used to be.', mood: 'urgent' },
-    { speaker: 'Rui (Spider Demon)', text: 'Then I will pull your sister\'s face out of your heart and keep it in silk, where nothing rots and nothing ever leaves.', mood: 'sinister' }
+    { speaker: 'Shira (Moonweaver)', text: 'You smell of warm hearths. Of someone waiting at home. I had that once. Now I spin it from the people of your village. Join my family, little blade. I will even love you.', mood: 'sinister' },
+    { speaker: 'You', text: 'Love is not something you wind around a spool, Shira. Let them go. All of them. Then we will talk about what you used to be.', mood: 'urgent' },
+    { speaker: 'Shira (Moonweaver)', text: 'Then I will pull your sister\'s face out of your heart and keep it in silk, where nothing rots and nothing ever leaves.', mood: 'sinister' }
   ],
   bossWin: [
-    { speaker: 'Rui (Spider Demon)', text: 'The threads... were never warm at all. I only wanted someone... to wait for me... when I came home.', mood: 'sad' },
-    { speaker: 'You', text: 'Then go where someone is waiting. The moon is setting, Rui. It is over.', mood: 'calm' },
-    { speaker: 'Kasugai Crow', text: 'Caw! Lower Moon Five, defeated! The Blood Moon sets! The Hashira will hear of this night! Caw!', mood: 'excited' }
+    { speaker: 'Shira (Moonweaver)', text: 'The threads... were never warm at all. I only wanted someone... to wait for me... when I came home.', mood: 'sad' },
+    { speaker: 'You', text: 'Then go where someone is waiting. The moon is setting, Shira. It is over.', mood: 'calm' },
+    { speaker: 'Shrine Crow', text: 'Caw! The Moonweaver is defeated! The Blood Moon sets! The Order will hear of this night! Caw!', mood: 'excited' }
   ]
 };
 
 const CUTSCENES: Record<string, { speaker: string; text: string; mood: string }[]> = {
   intro: [
     { speaker: 'Narrator', text: 'Three nights ago, the threads came over the wall. No scream. No broken lock. Just an empty futon, and one small sandal in the snow.', mood: 'sinister' },
-    { speaker: 'Narrator', text: 'Her name is Yae. She is seven years old. Every night since, the moon has swollen redder, and the wisteria guarding this village has wilted another inch.', mood: 'sinister' },
-    { speaker: 'Master Urokodaki', text: 'I would not send any child of mine up that mountain on a red night. So I am asking you as your teacher, Tanjiro: end this before another house goes quiet.', mood: 'calm' },
-    { speaker: 'You', text: 'You do not have to ask, Master. I will cut every thread on Natagumo and carry her down myself. Warm my breathing - then open the gate.', mood: 'serious' }
+    { speaker: 'Narrator', text: 'Her name is Yae. She is seven years old. Every night since, the moon has swollen redder, and the moonpetals guarding this village has wilted another inch.', mood: 'sinister' },
+    { speaker: 'Master Iwato', text: 'I would not send any child of mine up that mountain on a red night. So I am asking you as your teacher, Ren: end this before another house goes quiet.', mood: 'calm' },
+    { speaker: 'You', text: 'You do not have to ask, Master. I will cut every thread on Kurenai and carry her down myself. Warm my focus - then open the gate.', mood: 'serious' }
   ],
   forestEntrance: [
-    { speaker: 'Guard Genya', text: 'Urokodaki\'s seal confirmed. Gates open! ...Listen, slayer. Past this point the trees stop whispering back. Fall here, and the mountain keeps twenty mon of your soul\'s weight. Move like water.', mood: 'urgent' },
+    { speaker: 'Guard Daigo', text: 'Iwato\'s seal confirmed. Gates open! ...Listen, warden. Past this point the trees stop whispering back. Fall here, and the mountain keeps twenty mon of your soul\'s weight. Move like water.', mood: 'urgent' },
     { speaker: 'Narrator', text: 'The bamboo closes behind you like a held breath. Threads hang between the stalks - fine as silk, red as veins. Somewhere above, something is humming a lullaby.', mood: 'sinister' },
-    { speaker: 'You', text: 'Yae - if you can hear me, hold on. Water Breathing, Fourth Form: Striking Tide!', mood: 'excited' }
+    { speaker: 'You', text: 'Yae - if you can hear me, hold on. Moonflow, Fourth Form: Riptide!', mood: 'excited' }
   ],
   caveEntrance: [
     { speaker: 'Narrator', text: 'The cavern mouth breathes cold rot. Stalactites weep purple venom. The cocoons overhead sway, though there is no wind.', mood: 'sinister' },
-    { speaker: 'You', text: 'Steady. Breathe it in - the fear, the cold, all of it. Then let it out with the cut. Water Breathing, Tenth Form: Constant Flux!', mood: 'serious' }
+    { speaker: 'You', text: 'Steady. Breathe it in - the fear, the cold, all of it. Then let it out with the cut. Moonflow - Final Form: Endless Tide!', mood: 'serious' }
   ],
   peakEntrance: [
     { speaker: 'Narrator', text: 'The snow falls red at the summit. The Blood Moon hangs so close you can watch it pulse. The shrine bells ring with no hands on the rope.', mood: 'sinister' },
-    { speaker: 'You', text: 'Lungs burning. Fingers numb. Good - that means I am still alive to feel them. Stay with me, Nezuko. Hinokami Kagura.', mood: 'urgent' }
+    { speaker: 'You', text: 'Lungs burning. Fingers numb. Good - that means I am still alive to feel them. Stay with me, Hana. Blood Moon Dance.', mood: 'urgent' }
   ],
   bossArrival: [
-    { speaker: 'Rui (Spider Demon)', text: 'You climb well, for prey. But the moon is at its zenith, little slayer, and every thread on this mountain answers to me. You walked into my family\'s web the moment you loved something.', mood: 'sinister' },
-    { speaker: 'You', text: 'My family was never spun from stolen souls. Water cannot be woven, Rui - and it cannot be caught! Hinokami Kagura: Clear Blue Sky!', mood: 'urgent' },
-    { speaker: 'Narrator', text: 'The air turns to wire. Rui\'s defenses drink the moonlight - watch for his thread-locks and dash through the gaps!', mood: 'urgent' }
+    { speaker: 'Narrator', text: 'The summit is silent. Even the snow dares not fall. Watch the mist, Ren. Watch it part.', mood: 'sinister' },
+    { speaker: 'Narrator', text: 'She comes down the moonlight like a dropped stitch.', mood: 'sinister' },
+    { speaker: 'Shira (Moonweaver)', text: 'You climb well, for prey. But the moon is at its zenith, little blade, and every thread on this mountain answers to me. You walked into my family\'s web the moment you loved something.', mood: 'sinister' },
+    { speaker: 'Narrator', text: 'The Moonweaver. The red moon\'s final stitch.', mood: 'sinister' },
+    { speaker: 'You', text: 'My family was never spun from stolen souls. Water cannot be woven, Shira - and it cannot be caught! Blood Moon Dance: Pale Sky!', mood: 'urgent' },
+    { speaker: 'Narrator', text: 'The air turns to wire. Shira\'s defenses drink the moonlight - watch for her thread-locks and dash through the gaps!', mood: 'urgent' }
   ]
 };
 
@@ -216,30 +220,30 @@ const DIALOGUE_CHOICES: Record<string, {
     }[];
 }> = {
     master_need_training: {
-        question: "Ask Master Urokodaki before the gate opens:",
+        question: "Ask Master Iwato before the gate opens:",
         choices: [
             {
-                text: "🌀 Ask: The secret of Water Breathing",
-                reply: "Urokodaki taps your sternum with one finger. 'Water does not argue with the stone. It goes around it. When a demon swings, dash THROUGH it - K, or the dash button. For a heartbeat you are untouchable, and your focus doubles. Flow, boy. Do not fight the river.'"
+                text: "🌀 Ask: The secret of the Moonflow",
+                reply: "Iwato taps your sternum with one finger. 'Water does not argue with the stone. It goes around it. When a demon swings, dash THROUGH it - K, or the dash button. For a heartbeat you are untouchable, and your focus doubles. Flow, boy. Do not fight the river.'"
             },
             {
-                text: "🕸️ Ask: How do I break Rui's webs?",
-                reply: "'Three sacred cocoons hang in the deep forest, woven from stolen souls. While even one holds, Rui's skin turns every blade. Your minimap glows where they hang. Cut all three - then his flesh remembers it can die.'"
+                text: "🕸️ Ask: How do I break Shira's webs?",
+                reply: "'Three sacred cocoons hang in the deep forest, woven from stolen souls. While even one holds, Shira's skin turns every blade. Your minimap glows where they hang. Cut all three - then her flesh remembers it can die.'"
             },
             {
                 text: "🦊 Request the ancestral ward mask (+25 Max Stamina)",
-                reply: "Urokodaki presses the old fox mask to your forehead. 'My students wore this before you. Some of them came home.' Warmth settles into your lungs. Maximum stamina permanently +25!",
+                reply: "Iwato presses the old fox mask to your forehead. 'My students wore this before you. Some of them came home.' Warmth settles into your lungs. Maximum stamina permanently +25!",
                 effect: (s) => {
-                    if (!s.urokodakiCharmGranted) {
+                    if (!s.iwatoCharmGranted) {
                         s.maxStamina = (s.maxStamina || 100) + 25;
                         s.stamina = s.maxStamina;
-                        s.urokodakiCharmGranted = true;
+                        s.iwatoCharmGranted = true;
                     }
                 }
             },
             {
                 text: "🎯 'I am ready. Watch my postures.'",
-                reply: "'Then show me. Three strikes on the oak dummy to your right. Clean cuts, full breathing - and the gate opens.'"
+                reply: "'Then show me. Three strikes on the oak dummy to your right. Clean cuts, full focus - and the gate opens.'"
             }
         ]
     },
@@ -247,22 +251,22 @@ const DIALOGUE_CHOICES: Record<string, {
         question: "One vow before the gate:",
         choices: [
             {
-                text: "🔥 Swear: Protect Nezuko, whatever it costs (+15% Attack)",
-                reply: "You bow until your forehead touches the snow. 'Nezuko gave up everything she was. I can give this mountain one night.' Heat flickers along your blade - slash damage permanently +15%!",
+                text: "🔥 Swear: Protect Hana, whatever it costs (+15% Attack)",
+                reply: "You bow until your forehead touches the snow. 'Hana gave up everything she was. I can give this mountain one night.' Heat flickers along your blade - slash damage permanently +15%!",
                 effect: (s) => {
-                    if (!s.nezukoVowGranted) {
+                    if (!s.hanaVowGranted) {
                         s.slashDamageMult = (s.slashDamageMult || 1.0) + 0.15;
-                        s.nezukoVowGranted = true;
+                        s.hanaVowGranted = true;
                     }
                 }
             },
             {
-                text: "📜 Ask: Teach me the Slayer Ranks",
-                reply: "'Mizunoto, Mizunoe, Kanoto... ten steps to the Hashira. You stand on the first stair, barefoot in the snow. Climb. Every demon you cut down is a step.'"
+                text: "📜 Ask: Teach me the Order Ranks",
+                reply: "'New Moon, Crescent, Quarter... ten steps to the Eclipse. You stand on the first stair, barefoot in the snow. Climb. Every horror you cut down is a step.'"
             },
             {
                 text: "⚔️ 'Unseal the gate. I am ready.'",
-                reply: "'The wisteria barrier is lifted. The bamboo forest is old, cold, and hungry. Go, Mizunoto. Come back with that child - or do not come back at all.'"
+                reply: "'The moonpetal barrier is lifted. The bamboo forest is old, cold, and hungry. Go, New Moon. Come back with that child - or do not come back at all.'"
             }
         ]
     },
@@ -271,11 +275,11 @@ const DIALOGUE_CHOICES: Record<string, {
         choices: [
             {
                 text: "🏮 Ask: How do I cut a cocoon safely?",
-                reply: "Zenzo leans close. 'They burst with poison mist if you cut them point-blank. Strike from a breath away - your Water Wheel (Skill 1) tears them open from range. Or be stubborn and bathe in the mist. Monks make few rules. That is one.'"
+                reply: "Zenzo leans close. 'They burst with poison mist if you cut them point-blank. Strike from a breath away - your Tide Wheel (Skill 1) tears them open from range. Or be stubborn and bathe in the mist. Monks make few rules. That is one.'"
             },
             {
                 text: "💰 Accept his offering (+25 Mon)",
-                reply: "The old monk presses warm copper into your palm. 'Teuchi's ramen stall, when you come back down. Eat hot food. The dead envy the living most for that.' +25 Mon!",
+                reply: "The old monk presses warm copper into your palm. 'Roku's noodle stall, when you come back down. Eat hot food. The dead envy the living most for that.' +25 Mon!",
                 effect: (s) => {
                     if (!s.monkCoinsGranted) {
                         s.mon = (s.mon || 0) + 25;
@@ -293,9 +297,12 @@ export const GameWorld: React.FC = () => {
   const spawnParticlesRef = useRef<any>(null);
   const advanceDialogRef = useRef<any>(null);
   const [mobileMode, setMobileMode] = useState<'auto' | true | false>('auto');
+  const isTouchPhone = useRef((('ontouchstart' in window) || navigator.maxTouchPoints > 0) && /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent)).current;
+  const [isPortrait, setIsPortrait] = useState(() => window.innerHeight > window.innerWidth);
+  const fsRequestedRef = useRef(false);
   
   // Game UI States
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameover' | 'victory' | 'loading'>('menu');
+  const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameover' | 'victory' | 'loading' | 'opening'>('menu');
   const [currentStage, setCurrentStage] = useState<'village' | 'forest' | 'boss'>('village');
   const [dialogId, setDialogId] = useState<string | null>(null);
   const [dialogLineIdx, setDialogLineIdx] = useState<number>(0);
@@ -340,8 +347,8 @@ export const GameWorld: React.FC = () => {
   useEffect(() => {
       if (!dialogId) return;
       setDialogChars(0);
-      const isSl = dialogId.toLowerCase().includes('slayer');
-      const arr = DIALOGUES[dialogId] || [{ speaker: isSl ? 'Demon Slayer Guard' : 'Villager', text: isSl ? 'Maintain total concentration! Forest demons have been very active lately.' : 'Thank goodness we have the Demon Slayer Corps protecting our humble village!', mood: isSl ? 'urgent' : 'calm' }];
+      const isSl = dialogId.toLowerCase().includes('warden');
+      const arr = DIALOGUES[dialogId] || [{ speaker: isSl ? 'Order Warden' : 'Villager', text: isSl ? 'Maintain full moon focus! Forest demons have been very active lately.' : 'Thank goodness we have the Moonflow Order protecting our humble village!', mood: isSl ? 'urgent' : 'calm' }];
       const full = selectedChoiceReply ?? (arr[dialogLineIdx]?.text || '');
       const iv = setInterval(() => {
           setDialogChars(prev => {
@@ -383,7 +390,7 @@ export const GameWorld: React.FC = () => {
   const saveGameData = () => {
       const s = stateRef.current;
       try {
-          localStorage.setItem('ds_savegame', obfuscateData({
+          localStorage.setItem('cm_savegame', obfuscateData({
               stage: s.stage,
               health: s.health,
               maxHealth: s.maxHealth,
@@ -399,8 +406,8 @@ export const GameWorld: React.FC = () => {
               critDamageMult: s.critDamageMult,
               umbrellaGetaActive: s.umbrellaGetaActive,
               sushiNigiriActive: s.sushiNigiriActive,
-              wisteriaHealActive: s.wisteriaHealActive,
-              spiritBreathingMult: s.spiritBreathingMult,
+              moonpetalHealActive: s.moonpetalHealActive,
+              spiritFocusMult: s.spiritFocusMult,
               swordRefinements: s.swordRefinements,
               acceptedQuests: Array.from(acceptedQuests),
               hideMainQuests: hideMainQuests,
@@ -417,7 +424,7 @@ export const GameWorld: React.FC = () => {
   };
 
   const loadGameData = () => {
-      const saved = localStorage.getItem('ds_savegame');
+      const saved = localStorage.getItem('cm_savegame');
       if (saved) {
           audioManager.playWater();
           startGame(false);
@@ -434,14 +441,14 @@ export const GameWorld: React.FC = () => {
       status: 'available' | 'active' | 'claimable' | 'completed';
       isMain?: boolean;
   }>>({
-      merchant_ramen: { title: "Ramen Delivery", desc: "Deal 300 total points of damage inside the Training Plaza!", target: 300, current: 0, rewardMon: 40, rewardXp: 80, status: 'available', isMain: true },
+      merchant_ramen: { title: "Noodle Delivery", desc: "Deal 300 total points of damage inside the Training Plaza!", target: 300, current: 0, rewardMon: 40, rewardXp: 80, status: 'available', isMain: true },
       merchant_tea: { title: "Matcha Feast", desc: "Defeat 3 Bamboo training dummies or forest demons!", target: 3, current: 0, rewardMon: 50, rewardXp: 100, status: 'available' },
       merchant_forge: { title: "Blacksmith Steel", desc: "Perform 5 element-infused special attacks (Water/Fire/Thunder)!", target: 5, current: 0, rewardMon: 60, rewardXp: 120, status: 'available' },
       merchant_mask: { title: "Artisan Mask Warding", desc: "Unleash 8 swift evasive movement dashes!", target: 8, current: 0, rewardMon: 45, rewardXp: 90, status: 'available' },
       merchant_sushi: { title: "Sushicombat Perfection", desc: "Reach a continuous 12-hit strike combo streak!", target: 12, current: 0, rewardMon: 55, rewardXp: 110, status: 'available' },
       merchant_umbrella: { title: "Wind-Weaver Guarding", desc: "Block or guard 5 times during aggressive battles!", target: 5, current: 0, rewardMon: 50, rewardXp: 100, status: 'available' },
-      merchant_herbs: { title: "Herbal Vitality", desc: "Stay active for 45 full seconds of breathing!", target: 45, current: 0, rewardMon: 70, rewardXp: 140, status: 'available' },
-      merchant_sake: { title: "Breathing Legend", desc: "Slay 5 powerful demons!", target: 5, current: 0, rewardMon: 80, rewardXp: 160, status: 'available' }
+      merchant_herbs: { title: "Herbal Vitality", desc: "Stay active for 45 full seconds of steady focus!", target: 45, current: 0, rewardMon: 70, rewardXp: 140, status: 'available' },
+      merchant_sake: { title: "Focus Legend", desc: "Slay 5 powerful demons!", target: 5, current: 0, rewardMon: 80, rewardXp: 160, status: 'available' }
   });
   const [hideMainQuests, setHideMainQuests] = useState(false);
 
@@ -476,9 +483,9 @@ export const GameWorld: React.FC = () => {
     critDamageMult: 2.0,
     umbrellaGetaActive: false,
     sushiNigiriActive: false,
-    wisteriaHealActive: false,
-    spiritBreathingMult: 1.0,
-    swordRefinements: 0, // Upgradable Haganezuka sword refinements
+    moonpetalHealActive: false,
+    spiritFocusMult: 1.0,
+    swordRefinements: 0, // Upgradable Genta sword refinements
     hudTimer: 0,
     questsProgress: { damageDealt: 0, kills: 0, skills: 0, dashes: 0, maxCombo: 0, blocks: 0, timeSpent: 0 },
 
@@ -564,7 +571,46 @@ export const GameWorld: React.FC = () => {
   useEffect(() => {
       stateRef.current.activeCutscene = cutsceneId;
       stateRef.current.cutsceneStepIdx = cutsceneLineIdx;
+      if (cutsceneId && cutsceneLineIdx === 0) (audioManager as any).playStinger?.();
   }, [cutsceneId, cutsceneLineIdx]);
+  // Charon narration: one recorded clip per story beat, fired as the beat's
+  // line appears. Cutscene beats keyed cs:<id>:<step>, dialog beats dg:<id>:<line>.
+  useEffect(() => {
+      const NARR: Record<string, string> = {
+          'cs:intro:0': 'narr_intro',
+          'cs:forestEntrance:0': 'narr_forest',
+          'cs:caveEntrance:0': 'narr_cavern',
+          'cs:peakEntrance:0': 'narr_summit',
+          'cs:bossArrival:5': 'narr_midfight',
+          'dg:caveWin:0': 'narr_cocoon',
+          // Shira (Moonweaver) + Iwato character voices
+          'cs:bossArrival:2': 'shira_arrival',
+          'dg:bossIntro:0': 'shira_bossintro_1',
+          'dg:bossIntro:2': 'shira_bossintro_2',
+          'dg:bossWin:0': 'shira_death',
+          'dg:master_need_training:0': 'iwato_1',
+          'dg:master_need_training:1': 'iwato_2',
+          'dg:master_need_training:2': 'iwato_3',
+          'dg:villageIntro:0': 'iwato_4',
+          'dg:villageIntro:1': 'iwato_5',
+          'dg:peakArrival:2': 'iwato_memory',
+          'cs:intro:2': 'iwato_farewell',
+      };
+      const key = cutsceneId !== null
+          ? `cs:${cutsceneId}:${cutsceneLineIdx}`
+          : dialogId !== null ? `dg:${dialogId}:${dialogLineIdx}` : null;
+      if (key && NARR[key]) {
+          // The clip may still be fetching/decoding when the beat starts
+          // (fresh page load): retry briefly until the buffer is ready.
+          const name = NARR[key];
+          const tryPlay = (attempt: number) => {
+              const se: any = audioManager;
+              if (se.voiceBuffers && se.voiceBuffers[name]) { audioManager.playVoice(name, { volume: 1.0 }); return; }
+              if (attempt < 12) setTimeout(() => tryPlay(attempt + 1), 250);
+          };
+          tryPlay(0);
+      }
+  }, [cutsceneId, cutsceneLineIdx, dialogId, dialogLineIdx]);
   useEffect(() => {
       stateRef.current.dummyHits = dummyHits;
   }, [dummyHits]);
@@ -578,6 +624,18 @@ export const GameWorld: React.FC = () => {
     audioManager.setPaused(isPaused);
   }, [gameState, menuOpen, settingsOpen]);
 
+  // Auto-pause when the tab loses focus or is backgrounded (calls, app switches, portal iframes)
+  useEffect(() => {
+      const pause = () => { if (gameState === 'playing') setMenuOpen(true); };
+      const onVisibility = () => { if (document.visibilityState === 'hidden') pause(); };
+      document.addEventListener('visibilitychange', onVisibility);
+      window.addEventListener('blur', pause);
+      return () => {
+          document.removeEventListener('visibilitychange', onVisibility);
+          window.removeEventListener('blur', pause);
+      };
+  }, [gameState]);
+
   useEffect(() => {
     audioManager.setVolumes(volMaster, volMusic, volSfx, volAmbient);
     audioManager.setAmbient(stateRef.current.stage || 'none', envWeather);
@@ -590,17 +648,51 @@ export const GameWorld: React.FC = () => {
     }
   }, [mobileMode]);
 
+  // Rotate-to-landscape gate: phones only, gameplay only. Desktop untouched.
+  const rotateGate = isTouchPhone && isPortrait && gameState === 'playing';
+  useEffect(() => {
+    const onR = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', onR);
+    window.addEventListener('orientationchange', onR);
+    return () => { window.removeEventListener('resize', onR); window.removeEventListener('orientationchange', onR); };
+  }, []);
+  useEffect(() => { stateRef.current.rotateGate = rotateGate; }, [rotateGate]);
+  useEffect(() => { stateRef.current.menuOpenSync = menuOpen; if (menuOpen) { const inp = stateRef.current.input; if (inp) { inp.skill1 = inp.skill2 = inp.skill3 = inp.attack = inp.dash = inp.jump = inp.interact = false; inp.x = 0; inp.y = 0; } } }, [menuOpen]);
+  useEffect(() => { stateRef.current.activeShopSync = activeShop; }, [activeShop]);
+  useEffect(() => {
+    if (gameState !== 'playing' && fsRequestedRef.current) {
+      fsRequestedRef.current = false;
+      try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch {}
+    }
+  }, [gameState]);
+  const switchToLandscape = async () => {
+    try { if (document.documentElement.requestFullscreen) { await document.documentElement.requestFullscreen(); fsRequestedRef.current = true; } } catch {}
+    try { await (screen.orientation as any).lock('landscape'); } catch {}
+  };
+
   // Main 3D Engine Initialization
   useEffect(() => {
     if (!canvasRef.current || !mountRef.current) return;
     let width = mountRef.current.clientWidth;
     let height = mountRef.current.clientHeight;
 
-    const isMobileDevice = window.innerWidth < 768;
+    const isMobileDevice = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: !isMobileDevice, powerPreference: 'high-performance' });
+    // WebGL context-loss recovery (mobile GPUs can drop the context under load):
+    // offer a one-tap restore instead of a permanently frozen screen.
+    if (canvasRef.current) {
+        canvasRef.current.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            const ov = document.createElement('div');
+            ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:monospace;color:#fff;text-align:center;padding:24px';
+            ov.innerHTML = '<div style="font-size:18px;letter-spacing:2px">GRAPHICS HICCUP</div><div style="font-size:12px;color:#aaa">Your progress is saved.</div><button id="gl-restore" style="padding:14px 28px;background:#7f1d1d;border:1px solid #ef4444;color:#fff;font-family:monospace;letter-spacing:2px;border-radius:8px;font-size:14px">TAP TO RESTORE</button>';
+            document.body.appendChild(ov);
+            document.getElementById('gl-restore')?.addEventListener('click', () => { try { saveGameData(); } catch {} window.location.reload(); });
+        });
+    }
     
     renderer.setSize(width, height);
     renderer.setPixelRatio(isMobileDevice ? 1 : Math.min(window.devicePixelRatio, 2));
@@ -627,7 +719,7 @@ export const GameWorld: React.FC = () => {
     ssaoPass.maxDistance = 0.1;
     
     composer.addPass(renderPass);
-    composer.addPass(ssaoPass);
+    if (!isMobileDevice) composer.addPass(ssaoPass); // SSAO halves fps on mid-range phone GPUs; bloom carries the look
     composer.addPass(bloomPass);
     composer.addPass(outputPass);
 
@@ -827,7 +919,7 @@ export const GameWorld: React.FC = () => {
              
              typeAlpha = (waterMask + foamMask * 0.5) * (0.5 + 0.5*vUv.x);
           } else if (formType == 2) {
-             // Fire (Hinokami Kagura): Intense burning flames, sharp distortions
+             // Fire (Blood Moon Dance): intense burning flames, sharp distortions
              float flameOff = noise(vec2(vUv.x * 5.0 - time * 15.0, time * 3.0)) * 0.2;
              float n = noise(vec2(vUv.x * 15.0 - time * 25.0, (vUv.y + flameOff) * 8.0));
              float n2 = noise(vec2(vUv.x * 35.0 - time * 40.0, vUv.y * 15.0));
@@ -840,7 +932,7 @@ export const GameWorld: React.FC = () => {
              
              typeAlpha = (burnMask * 1.5) * (0.3 + 0.7*vUv.x);
           } else if (formType == 3) {
-             // Thunder Breathing: Crackling amber-gold electric bolt pattern with extremely fast flicker
+             // Stormstep: crackling amber-gold electric bolt pattern with extremely fast flicker
              float thunderTime = time * 55.0; 
              float arc1 = sin(vUv.x * 12.0 - thunderTime) * 0.15;
              float arc2 = cos(vUv.x * 35.0 + thunderTime * 1.4) * 0.08;
@@ -901,10 +993,16 @@ export const GameWorld: React.FC = () => {
 
     const buildPlayerModel = () => {
       const g = new THREE.Group();
-      // Textures (Tanjiro Haori Pattern)
+      // Textures (Ren's wave Haori pattern)
       const cCanvas = document.createElement('canvas'); cCanvas.width=64; cCanvas.height=64;
       const ctx = cCanvas.getContext('2d')!;
-      for(let i=0; i<4; i++){ for(let j=0; j<4; j++){ ctx.fillStyle = (i+j)%2===0 ? '#187A4F' : '#101010'; ctx.fillRect(i*16, j*16, 16, 16); } }
+      ctx.fillStyle = '#161016'; ctx.fillRect(0, 0, 64, 64);
+      ctx.fillStyle = '#8a1428';
+      for (let row = 0; row < 4; row++) {
+          const y = 4 + row * 16;
+          const off = (row % 2) * 8;
+          for (let x = -8; x < 64; x += 16) { ctx.fillRect(x + off, y, 8, 6); }
+      }
       const haoriTex = new THREE.CanvasTexture(cCanvas); haoriTex.magFilter = THREE.NearestFilter;
       const haoriMat = new THREE.MeshStandardMaterial({map: haoriTex, roughness: 1.0, side: THREE.DoubleSide});
       
@@ -913,7 +1011,7 @@ export const GameWorld: React.FC = () => {
       head.position.y = 1.4; head.castShadow = true;
       
       // Detailed Anime Hair Clusters (Replacing single box hair)
-      const hairMat = new THREE.MeshStandardMaterial({color: 0x4a1c1c, roughness: 0.95});
+      const hairMat = new THREE.MeshStandardMaterial({color: 0x171722, roughness: 0.95});
       const hairMain = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.28, 0.56), hairMat);
       hairMain.position.y = 1.65;
       
@@ -951,12 +1049,13 @@ export const GameWorld: React.FC = () => {
       rEye.position.set(0.12, 1.42, 0.26);
       const lEye = rEye.clone(); lEye.position.x = -0.12;
       
-      // Hanafuda Earrings (With miniature rising sun pattern!)
+      // Crescent Earrings (pale moon-drop pattern)
       const earCanvas = document.createElement('canvas'); earCanvas.width=16; earCanvas.height=32;
       const eCtx = earCanvas.getContext('2d')!;
-      eCtx.fillStyle = '#ffffff'; eCtx.fillRect(0,0,16,32);
-      eCtx.fillStyle = '#ff3333'; eCtx.beginPath(); eCtx.arc(8, 8, 4, 0, Math.PI*2); eCtx.fill(); // Crimson sun
-      eCtx.strokeStyle = '#101010'; eCtx.lineWidth = 1; eCtx.strokeRect(0,0,16,32);
+      eCtx.fillStyle = '#14141c'; eCtx.fillRect(0,0,16,32);
+      eCtx.fillStyle = '#e8ecff'; eCtx.beginPath(); eCtx.arc(8, 12, 6, 0, Math.PI*2); eCtx.fill(); // Pale moon disc
+      eCtx.fillStyle = '#14141c'; eCtx.beginPath(); eCtx.arc(10.5, 10, 5, 0, Math.PI*2); eCtx.fill(); // Cut into a crescent
+      eCtx.strokeStyle = '#8a1428'; eCtx.lineWidth = 1; eCtx.strokeRect(0,0,16,32);
       const earTex = new THREE.CanvasTexture(earCanvas);
       
       const earMat = new THREE.MeshBasicMaterial({map: earTex, transparent: true, side: THREE.DoubleSide});
@@ -969,7 +1068,7 @@ export const GameWorld: React.FC = () => {
       const torso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), haoriMat);
       torso.position.y = 0.8; torso.castShadow = true; g.add(torso);
  
-      // Demon Slayer Corps uniform details: white belt, collar trim, gold buttons
+      // Moonflow Order uniform details: white belt, collar trim, gold buttons
       const belt = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.09, 0.42), new THREE.MeshStandardMaterial({color: 0xf5f5f5, roughness: 0.85}));
       belt.position.y = 0.44; g.add(belt);
       const collarMat = new THREE.MeshStandardMaterial({color: 0xf5f5f5, roughness: 0.85});
@@ -984,8 +1083,8 @@ export const GameWorld: React.FC = () => {
           g.add(btn);
       }
  
-      const lArm = buildRealisticLimb(0.2, 0.7, 0x187A4F, true); lArm.pivot.position.set(-0.4, 1.1, 0); g.add(lArm.pivot);
-      const rArm = buildRealisticLimb(0.2, 0.7, 0x187A4F, true); rArm.pivot.position.set(0.4, 1.1, 0); g.add(rArm.pivot);
+      const lArm = buildRealisticLimb(0.2, 0.7, 0x8a1428, true); lArm.pivot.position.set(-0.4, 1.1, 0); g.add(lArm.pivot);
+      const rArm = buildRealisticLimb(0.2, 0.7, 0x8a1428, true); rArm.pivot.position.set(0.4, 1.1, 0); g.add(rArm.pivot);
       
       // Waving Haori (Kimono coat) Left, Right, & Back pivot segments
       const backFlapPivot = new THREE.Group();
@@ -1013,7 +1112,7 @@ export const GameWorld: React.FC = () => {
       const lLeg = buildRealisticLimb(0.25, 0.8, 0x1a1a1a); lLeg.pivot.position.set(-0.15, 0.8, 0); g.add(lLeg.pivot);
       const rLeg = buildRealisticLimb(0.25, 0.8, 0x1a1a1a); rLeg.pivot.position.set(0.15, 0.8, 0); g.add(rLeg.pivot);
  
-      // Nichirin Sword
+      // Moonsteel Sword
       const swordGrp = new THREE.Group();
       
       const bladeGeom = new THREE.BoxGeometry(0.03, 1.4, 0.12);
@@ -1052,13 +1151,13 @@ export const GameWorld: React.FC = () => {
     const buildEnemy = (type: string, variationIndex?: number) => {
       const g = new THREE.Group();
       let scale = 1; let skinC = 0xffccaa; let clothesC = 0x221111;
-      let isBoss = false; let hasMutations = false; let isSlayer = false;
+      let isBoss = false; let hasMutations = false; let isWarden = false;
       
-      if (type === 'boss' || type.includes('moon')) { scale = 2.5; isBoss = true; skinC = 0xaaccdd; }
-      else if (type === 'spider_demon') { scale = 1.6; skinC = 0xffffff; clothesC = 0xdddddd; hasMutations = true; }
-      else if (type === 'slayer') { scale = 1.0; skinC = 0xffccaa; clothesC = 0x1a1a1a; isSlayer = true; }
-      else if (type === 'lower_moon') { scale = 2.0; skinC = 0xccffcc; clothesC = 0x111111; }
-      else if (type === 'upper_moon') { scale = 2.2; skinC = 0xffbbdd; clothesC = 0x882244; isBoss = true; }
+      if (type === 'boss' || type === 'greater_spawn' || type === 'elder_spawn') { scale = 2.5; isBoss = true; skinC = 0xaaccdd; }
+      else if (type === 'silk_spawn') { scale = 1.6; skinC = 0xffffff; clothesC = 0xdddddd; hasMutations = true; }
+      else if (type === 'warden') { scale = 1.0; skinC = 0xffccaa; clothesC = 0x1a1a1a; isWarden = true; }
+      else if (type === 'greater_spawn') { scale = 2.0; skinC = 0xccffcc; clothesC = 0x111111; }
+      else if (type === 'elder_spawn') { scale = 2.2; skinC = 0xffbbdd; clothesC = 0x882244; isBoss = true; }
       else if (type === 'normal') { scale = 1.0; skinC = 0xffe0cc; }
       
       const civIdx = type === 'normal' ? (variationIndex !== undefined ? variationIndex : Math.floor(Math.random() * 4)) : 0;
@@ -1136,7 +1235,7 @@ export const GameWorld: React.FC = () => {
           }
       } else {
           // Wild spiky demonic/anime hair (unifying aesthetics)
-          const hairColor = type === 'spider_demon' ? 0xffffff : (isSlayer ? 0xeeddaa : 0x3d2020);
+          const hairColor = type === 'silk_spawn' ? 0xffffff : (isWarden ? 0xeeddaa : 0x3d2020);
           const eHairMat = new THREE.MeshStandardMaterial({color: hairColor, roughness: 0.95});
           const eHairMain = new THREE.Mesh(new THREE.BoxGeometry(0.54 * scale, 0.2 * scale, 0.54 * scale), eHairMat);
           eHairMain.position.y = 1.63 * scale;
@@ -1171,16 +1270,16 @@ export const GameWorld: React.FC = () => {
           const lBlush = rBlush.clone(); lBlush.position.x = -0.14*scale;
           
           headG.add(rEye, lEye, rShine, lShine, rBlush, lBlush);
-      } else if (!isSlayer) {
+      } else if (!isWarden) {
           // Demonic glowing slit eyes
-          const rEye = new THREE.Mesh(new THREE.PlaneGeometry(0.1*scale, 0.05*scale), new THREE.MeshBasicMaterial({color: type==='upper_moon'?0xffcc00:0xff1100}));
+          const rEye = new THREE.Mesh(new THREE.PlaneGeometry(0.1*scale, 0.05*scale), new THREE.MeshBasicMaterial({color: type==='elder_spawn'?0xffcc00:0xff1100}));
           rEye.position.set(0.15*scale, 1.42*scale, 0.26*scale);
           const lEye = rEye.clone(); lEye.position.x = -0.15*scale;
           headG.add(rEye, lEye);
           
           // Spider face web markings or blood veins
-          const faceMarkMat = new THREE.MeshBasicMaterial({color: type==='spider_demon'?0xcc0000:0xdd0033, transparent: true, opacity: 0.8});
-          if (type === 'spider_demon') {
+          const faceMarkMat = new THREE.MeshBasicMaterial({color: type==='silk_spawn'?0xcc0000:0xdd0033, transparent: true, opacity: 0.8});
+          if (type === 'silk_spawn') {
               // spider web face lines
               const web1 = new THREE.Mesh(new THREE.PlaneGeometry(0.08*scale, 0.16*scale), faceMarkMat);
               web1.position.set(-0.14*scale, 1.34*scale, 0.261*scale);
@@ -1194,7 +1293,7 @@ export const GameWorld: React.FC = () => {
           }
           
           // Upper-Moon / Lower-Moon Eyeball Rank Inscriptions
-          if (type === 'upper_moon' || type === 'lower_moon' || type === 'boss') {
+          if (type === 'elder_spawn' || type === 'greater_spawn' || type === 'boss') {
               const rEHoriz = new THREE.Mesh(new THREE.PlaneGeometry(0.08*scale, 0.016*scale), new THREE.MeshBasicMaterial({color: 0x111111}));
               rEHoriz.position.set(0.15*scale, 1.42*scale, 0.262*scale);
               const rEVert = new THREE.Mesh(new THREE.PlaneGeometry(0.016*scale, 0.05*scale), new THREE.MeshBasicMaterial({color: 0x111111}));
@@ -1218,8 +1317,8 @@ export const GameWorld: React.FC = () => {
       g.add(headG);
 
       let torso;
-      if (isSlayer) {
-          // Zenitsu-style triangle patterned Haori over dark Uniform
+      if (isWarden) {
+          // Moonflow warden striped Haori over dark uniform
           const tGroup = new THREE.Group();
           const tShirt = new THREE.Mesh(new THREE.BoxGeometry(0.6*scale, 0.7*scale, 0.4*scale), new THREE.MeshStandardMaterial({color: clothesC}));
           tShirt.position.y = 0.85 * scale;
@@ -1227,10 +1326,11 @@ export const GameWorld: React.FC = () => {
           // Canvas scale patterns
           const sCanvas = document.createElement('canvas'); sCanvas.width=32; sCanvas.height=32;
           const sCtx = sCanvas.getContext('2d')!;
-          sCtx.fillStyle = '#ffaa00'; sCtx.fillRect(0,0,32,32);
-          sCtx.fillStyle = '#ffffff';
-          sCtx.beginPath(); sCtx.moveTo(8, 4); sCtx.lineTo(2, 28); sCtx.lineTo(14, 28); sCtx.fill();
-          sCtx.beginPath(); sCtx.moveTo(24, 4); sCtx.lineTo(18, 28); sCtx.lineTo(30, 28); sCtx.fill();
+          sCtx.fillStyle = '#26305e'; sCtx.fillRect(0,0,32,32);
+          sCtx.strokeStyle = '#e8ecff'; sCtx.lineWidth = 3;
+          for (let d = -32; d < 32; d += 10) {
+              sCtx.beginPath(); sCtx.moveTo(d, 32); sCtx.lineTo(d + 32, 0); sCtx.stroke();
+          }
           const sTex = new THREE.CanvasTexture(sCanvas); sTex.magFilter = THREE.NearestFilter;
           const sMat = new THREE.MeshStandardMaterial({map: sTex, roughness: 1.0, side: THREE.DoubleSide});
           
@@ -1294,7 +1394,7 @@ export const GameWorld: React.FC = () => {
       }
       
       // Determine limbs colors
-      let limbCol = isSlayer ? clothesC : skinC;
+      let limbCol = isWarden ? clothesC : skinC;
       if (type === 'normal') {
           if (civIdx === 0) limbCol = 0x1f3c6d;
           else if (civIdx === 1) limbCol = 0xd27d97;
@@ -1305,7 +1405,7 @@ export const GameWorld: React.FC = () => {
       const lArm = buildRealisticLimb(0.2*scale, 0.8*scale, limbCol, true); lArm.pivot.position.set(-0.4*scale, 1.1*scale, 0); g.add(lArm.pivot);
       const rArm = buildRealisticLimb(0.2*scale, 0.8*scale, limbCol, true); rArm.pivot.position.set(0.4*scale, 1.1*scale, 0); g.add(rArm.pivot);
       
-      let legCol = isSlayer ? clothesC : skinC;
+      let legCol = isWarden ? clothesC : skinC;
       if (type === 'normal') {
           legCol = (civIdx === 1) ? 0xffccaa : 0x222222; // geisha skin legs vs black pants
       }
@@ -1313,7 +1413,7 @@ export const GameWorld: React.FC = () => {
       const lLeg = buildRealisticLimb(0.25*scale, 0.8*scale, legCol); lLeg.pivot.position.set(-0.2*scale, 0.8*scale, 0); g.add(lLeg.pivot);
       const rLeg = buildRealisticLimb(0.25*scale, 0.8*scale, legCol); rLeg.pivot.position.set(0.2*scale, 0.8*scale, 0); g.add(rLeg.pivot);
       
-      if (isSlayer) {
+      if (isWarden) {
           const swordGrp = new THREE.Group();
           
           const bladeGeom = new THREE.BoxGeometry(0.03*scale, 1.4*scale, 0.12*scale);
@@ -1323,7 +1423,7 @@ export const GameWorld: React.FC = () => {
           const bladeEdge = new THREE.Mesh(new THREE.BoxGeometry(0.035*scale, 1.4*scale, 0.04*scale), new THREE.MeshStandardMaterial({color: 0xffffff, metalness: 0.8, roughness: 0.3}));
           bladeEdge.position.set(0, 0.8*scale, -0.05*scale);
           
-          // Glimmering element hilt core line for Slayer
+          // Glimmering element hilt core line for wardens
           const slayCoreGlow = new THREE.Mesh(new THREE.BoxGeometry(0.04*scale, 1.3*scale, 0.02*scale), new THREE.MeshBasicMaterial({color: 0xffea00, blending: THREE.AdditiveBlending}));
           slayCoreGlow.position.set(0.01*scale, 0.8*scale, 0);
           
@@ -1602,6 +1702,75 @@ export const GameWorld: React.FC = () => {
         return stall;
     };
 
+    // Premium atmosphere pass: gradient sky dome, stars, moon glow, cool rim
+    // light. All single-draw-call additions (fog:false so the dome is unaffected).
+    const makeGlowTexture = () => {
+        const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+        const g = c.getContext('2d')!;
+        const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+        grad.addColorStop(0, 'rgba(255,255,255,1)');
+        grad.addColorStop(0.25, 'rgba(255,255,255,0.55)');
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(c);
+    };
+    const buildAtmosphere = (stageName: string) => {
+        const skyCols: Record<string, [number, number, number]> = {
+            village: [0x120726, 0x4a1524, 0x8a3a1a],
+            forest:  [0x040814, 0x0d1e33, 0x14301c],
+            cave:    [0x0a0512, 0x1c0f2a, 0x2a1030],
+            peak:    [0x0a1226, 0x2a1a33, 0x5c1e24],
+            boss:    [0x140205, 0x3d0a0a, 0x6e1414],
+        };
+        const [top, mid, bot] = skyCols[stageName] || skyCols.forest;
+        const skyMat = new THREE.ShaderMaterial({
+            side: THREE.BackSide, depthWrite: false, fog: false,
+            uniforms: {
+                topColor: { value: new THREE.Color(top) },
+                midColor: { value: new THREE.Color(mid) },
+                botColor: { value: new THREE.Color(bot) },
+            },
+            vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+            fragmentShader: 'uniform vec3 topColor; uniform vec3 midColor; uniform vec3 botColor; varying vec3 vP;' +
+                'void main(){ float h = normalize(vP).y;' +
+                ' vec3 c = h > 0.10 ? mix(midColor, topColor, smoothstep(0.10, 0.62, h))' +
+                ' : mix(botColor, midColor, smoothstep(-0.10, 0.10, h));' +
+                ' gl_FragColor = vec4(c, 1.0); }',
+        });
+        const sky = new THREE.Mesh(new THREE.SphereGeometry(420, 24, 16), skyMat);
+        sky.renderOrder = -10;
+        environmentGrp.add(sky);
+
+        // Stars (one draw call, additive points on the upper dome)
+        const starCount = isMobileDevice ? 260 : 500;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            const th = Math.random() * Math.PI * 2;
+            const ph = Math.acos(1 - Math.random() * 0.85); // upper hemisphere
+            const r = 390;
+            starPos[i*3] = r * Math.sin(ph) * Math.cos(th);
+            starPos[i*3+1] = r * Math.cos(ph) + 10;
+            starPos[i*3+2] = r * Math.sin(ph) * Math.sin(th);
+        }
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xcfe0ff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+        const stars = new THREE.Points(starGeo, starMat);
+        environmentGrp.add(stars);
+
+        // Blood-moon glow halo (additive sprite on top of the existing moon mesh)
+        const glowTex = makeGlowTexture();
+        const haloMat = new THREE.SpriteMaterial({ map: glowTex, color: stageName === 'boss' ? 0xff3333 : (stageName === 'village' ? 0xff7733 : 0xfff2cc), transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+        const halo = new THREE.Sprite(haloMat);
+        halo.position.set(100, 100, -205); halo.scale.set(160, 160, 1);
+        environmentGrp.add(halo);
+
+        // Cool moonlit rim from the opposite side (no shadows: free on phones)
+        const rim = new THREE.DirectionalLight(stageName === 'boss' ? 0xff6666 : 0x7a9aff, 0.55);
+        rim.position.set(-60, 40, 60);
+        environmentGrp.add(rim);
+    };
+
     const loadStage = (stageName: string) => {
         environmentGrp.clear(); lightsGrp.clear(); colliders.length = 0; stateRef.current.enemies = [];
         stateRef.current.projectiles.forEach(p => scene.remove(p.mesh));
@@ -1620,6 +1789,7 @@ export const GameWorld: React.FC = () => {
         dir.position.set(50, 100, -20); dir.castShadow = !isMobileDevice;
         if(dir.shadow) { dir.shadow.camera.left = -60; dir.shadow.camera.right = 60; dir.shadow.camera.top = 60; dir.shadow.camera.bottom = -60; }
         lightsGrp.add(amb, dir);
+        buildAtmosphere(stageName);
 
         // Moon / Sun
         const moonMat = new THREE.MeshBasicMaterial({ color: stageName === 'boss' ? 0xff2222 : (stageName === 'village' ? 0xffaa33 : 0xffffee) });
@@ -1665,6 +1835,48 @@ export const GameWorld: React.FC = () => {
             gTex.wrapS = THREE.RepeatWrapping; gTex.wrapT = THREE.RepeatWrapping;
             gTex.repeat.set(12, 12);
             groundMat = new THREE.MeshStandardMaterial({ map: gTex, roughness: 0.95 });
+        } else if (stageName === 'peak') {
+            // Snowfield ground: pale blue-white drifts with ice sparkle
+            const peakCanvas = document.createElement('canvas');
+            peakCanvas.width = 128; peakCanvas.height = 128;
+            const pk = peakCanvas.getContext('2d')!;
+            pk.fillStyle = '#c9d8e8'; pk.fillRect(0, 0, 128, 128);
+            for (let i = 0; i < 26; i++) {
+                const rx = Math.random() * 128; const ry = Math.random() * 128; const rr = 8 + Math.random() * 14;
+                const grad = pk.createRadialGradient(rx, ry, 0, rx, ry, rr);
+                grad.addColorStop(0, 'rgba(255,255,255,0.85)'); grad.addColorStop(1, 'rgba(201,216,232,0)');
+                pk.fillStyle = grad; pk.beginPath(); pk.arc(rx, ry, rr, 0, Math.PI*2); pk.fill();
+            }
+            pk.fillStyle = 'rgba(255,255,255,0.9)';
+            for (let i = 0; i < 40; i++) { pk.fillRect(Math.random()*128, Math.random()*128, 1, 1); }
+            const gTex = new THREE.CanvasTexture(peakCanvas);
+            gTex.wrapS = THREE.RepeatWrapping; gTex.wrapT = THREE.RepeatWrapping;
+            gTex.repeat.set(12, 12);
+            groundMat = new THREE.MeshStandardMaterial({ map: gTex, roughness: 0.6 });
+        } else if (stageName === 'cave') {
+            // Cavern ground: dark rock with faint purple venom seep
+            const caveCanvas = document.createElement('canvas');
+            caveCanvas.width = 128; caveCanvas.height = 128;
+            const cv = caveCanvas.getContext('2d')!;
+            cv.fillStyle = '#17111f'; cv.fillRect(0, 0, 128, 128);
+            for (let i = 0; i < 22; i++) {
+                const rx = Math.random() * 128; const ry = Math.random() * 128; const rr = 6 + Math.random() * 10;
+                const grad = cv.createRadialGradient(rx, ry, 0, rx, ry, rr);
+                grad.addColorStop(0, '#241a33'); grad.addColorStop(1, '#17111f');
+                cv.fillStyle = grad; cv.beginPath(); cv.arc(rx, ry, rr, 0, Math.PI*2); cv.fill();
+            }
+            cv.strokeStyle = 'rgba(150,80,220,0.55)'; cv.lineWidth = 1.0;
+            for (let i = 0; i < 8; i++) {
+                cv.beginPath();
+                let cx2 = Math.random() * 128; let cy2 = Math.random() * 128;
+                cv.moveTo(cx2, cy2);
+                for (let j = 0; j < 5; j++) { cx2 += (Math.random()-0.5)*30; cy2 += (Math.random()-0.5)*30; cv.lineTo(cx2, cy2); }
+                cv.stroke();
+            }
+            const gTex = new THREE.CanvasTexture(caveCanvas);
+            gTex.wrapS = THREE.RepeatWrapping; gTex.wrapT = THREE.RepeatWrapping;
+            gTex.repeat.set(12, 12);
+            groundMat = new THREE.MeshStandardMaterial({ map: gTex, roughness: 0.9 });
         } else {
             // Boss Volcanic lava garden ground
             const bossCanvas = document.createElement('canvas');
@@ -1708,6 +1920,7 @@ export const GameWorld: React.FC = () => {
         colliders.push({box: new THREE.Box3(new THREE.Vector3(-105, -10, 100), new THREE.Vector3(105, 50, 105))});
 
         if (stageName === 'village') {
+            const lanternGlowPts: number[] = [];
             playerObj.group.position.set(0, 5, 20); playerObj.group.rotation.y = Math.PI;
 
             // --- Hand-Crafted Stone Pavements ("Ishidatami") and Curbs ---
@@ -1819,7 +2032,7 @@ export const GameWorld: React.FC = () => {
             const matHedgeColors = [
                 new THREE.MeshStandardMaterial({color: 0x2e5c1e, roughness: 0.95}), // Green base
                 new THREE.MeshStandardMaterial({color: 0xb52424, roughness: 0.95}), // Red camellia
-                new THREE.MeshStandardMaterial({color: 0x76208a, roughness: 0.95})  // Purple wisteria bush
+                new THREE.MeshStandardMaterial({color: 0x76208a, roughness: 0.95})  // Purple moonpetal bush
             ];
             const hedgeCount = 120;
             const instHedges = matHedgeColors.map(mat => {
@@ -1890,10 +2103,14 @@ export const GameWorld: React.FC = () => {
             }
             const shojiTex = new THREE.CanvasTexture(shojiCanvas); shojiTex.magFilter = THREE.NearestFilter;
             
-            const matShoji = new THREE.MeshStandardMaterial({map: shojiTex, roughness: 0.85, emissive: 0x443311, emissiveIntensity: 1.0});
+            const matShoji = new THREE.MeshStandardMaterial({map: shojiTex, roughness: 0.85, emissive: 0xbb6622, emissiveIntensity: 0.85}); // warm paper-window glow at night
             const matRoof = new THREE.MeshStandardMaterial({color: 0x1c1c1c, roughness: 0.6});
             const matLantern = new THREE.MeshStandardMaterial({color: 0xff1100, emissive: 0xff1100, emissiveIntensity: 0.9});
             const matWalkway = new THREE.MeshStandardMaterial({color: 0x4a3422, roughness: 1.0});
+
+            // Seeded PRNG: organic layout variance, identical on every device/load
+            let seed = 20261008;
+            const rand = () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
             // Grid size parameters
             const numBlocksX = 3; // 3 blocks wide
@@ -1963,15 +2180,43 @@ export const GameWorld: React.FC = () => {
                     ];
 
                     houseOffsets.forEach((ho, idx) => {
-                        const hx = blockCx + ho.x;
-                        const hz = blockCz + ho.z;
+                        // Organic village: jittered placement, slight rotation/scale variance,
+                        // occasional empty lot. Colliders and lanterns follow the jitter.
+                        const skipLot = idx !== 0 && rand() < 0.14; // never empty the whole block
+                        const jx = (rand() - 0.5) * 3.2;
+                        const jz = (rand() - 0.5) * 3.2;
+                        const jrot = (rand() - 0.5) * 0.16;
+                        const jscale = 0.92 + rand() * 0.2;
+                        const hx = blockCx + ho.x + jx;
+                        const hz = blockCz + ho.z + jz;
 
                         // Create two stories
                         for(let story=0; story<2; story++) {
                             const sy = story * 3.5;
+                            if (skipLot) { // collapsed matrices: invisible lot, no collider
+                                dummy.scale.set(0,0,0); dummy.updateMatrix();
+                                instBase.setMatrixAt(hIdx, dummy.matrix);
+                                instBackWall.setMatrixAt(hIdx, dummy.matrix);
+                                instSideWall.setMatrixAt(hIdx*2, dummy.matrix);
+                                instSideWall.setMatrixAt(hIdx*2+1, dummy.matrix);
+                                instShoji.setMatrixAt(hIdx, dummy.matrix);
+                                instPorch.setMatrixAt(hIdx, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4+1, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4+2, dummy.matrix);
+                                instPillar.setMatrixAt(hIdx*4+3, dummy.matrix);
+                                instRoof.setMatrixAt(hIdx, dummy.matrix);
+                                instHLantern.setMatrixAt(hIdx*2, dummy.matrix);
+                                instHLantern.setMatrixAt(hIdx*2+1, dummy.matrix);
+                                dummy.scale.set(1,1,1);
+                                hIdx++;
+                                continue;
+                            }
+                            dummy.scale.set(jscale, jscale, jscale);
                             dummy.position.set(hx, 0, hz);
-                            dummy.rotation.y = ho.rot;
+                            dummy.rotation.y = ho.rot + jrot;
                             dummy.updateMatrix();
+                            dummy.scale.set(1,1,1);
                             const bm = dummy.matrix.clone();
 
                             const applyLocal = (px:number, py:number, pz:number, ry:number=0) => {
@@ -2001,13 +2246,17 @@ export const GameWorld: React.FC = () => {
                                 dummy.scale.set(0,0,0); dummy.updateMatrix(); instRoof.setMatrixAt(hIdx, dummy.matrix); dummy.scale.set(1,1,1);
                             }
 
-                            instHLantern.setMatrixAt(hIdx*2, applyLocal(-3.8, 3.2, 4.0));
-                            instHLantern.setMatrixAt(hIdx*2+1, applyLocal(3.8, 3.2, 4.0));
+                            const hlm1 = applyLocal(-3.8, 3.2, 4.0).clone();
+                            instHLantern.setMatrixAt(hIdx*2, hlm1);
+                            lanternGlowPts.push(...new THREE.Vector3().setFromMatrixPosition(hlm1).toArray());
+                            const hlm2 = applyLocal(3.8, 3.2, 4.0).clone();
+                            instHLantern.setMatrixAt(hIdx*2+1, hlm2);
+                            lanternGlowPts.push(...new THREE.Vector3().setFromMatrixPosition(hlm2).toArray());
                             
                             hIdx++;
                         }
                         
-                        colliders.push({box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(hx, 5, hz), new THREE.Vector3(9, 10, 9))});
+                        if (!skipLot) colliders.push({box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(hx, 5, hz), new THREE.Vector3(9 * jscale, 10, 9 * jscale))});
                     });
                 }
             }
@@ -2086,7 +2335,7 @@ export const GameWorld: React.FC = () => {
             // Spawning spectacular high-fidelity Japanese Shop Stalls across the town lanes!
             const ramenStall = buildShopStall(8, 0, 15, Math.PI, 'ramen'); // Ramen stall on the right main street
             const teaStall = buildShopStall(-8, 0, 15, 0, 'tea');       // Tea dango stall on the left main street
-            const weaponStall = buildShopStall(-12, 0, -22, Math.PI / 2, 'weapon'); // Nichirin blacksmith near the plaza
+            const weaponStall = buildShopStall(-12, 0, -22, Math.PI / 2, 'weapon'); // moonsteel smith near the plaza
             const maskStall = buildShopStall(12, 0, -22, -Math.PI / 2, 'mask');  // Traditional theatrical mask stall near the plaza
             const sushiStall = buildShopStall(14, 0, 10, -Math.PI / 4, 'sushi'); // Sushi bento shop on right street
             const umbrellaStall = buildShopStall(-14, 0, 10, Math.PI / 4, 'umbrella'); // Umbrella shop on left street
@@ -2125,7 +2374,7 @@ export const GameWorld: React.FC = () => {
             createRestBench(-16, -16, Math.PI/2);
             createRestBench(16, -16, -Math.PI/2);
 
-            // Villager NPCs and Demon Slayers
+            // Villager NPCs and Order wardens
             const villagerPos = [
                 // General street citizens (moving/patrolling)
                 { id: 'villager_1', type: 'normal', pos: new THREE.Vector3(8, 0, 28), variation: 1, stationary: false }, // Townswoman in pink floral kimono
@@ -2134,10 +2383,10 @@ export const GameWorld: React.FC = () => {
                 { id: 'villager_4', type: 'normal', pos: new THREE.Vector3(-8, 0, 32), variation: 1, stationary: false }, // Another townswoman in pink floral kimono
                 { id: 'villager_5', type: 'normal', pos: new THREE.Vector3(18, 0, 6), variation: 3, stationary: false }, // Another citizen in teal Yukata
                 
-                // Slayer guards patrolling the streets
-                { id: 'slayer_1', type: 'slayer', pos: new THREE.Vector3(14, 0, 42), variation: 0, stationary: false },
-                { id: 'slayer_2', type: 'slayer', pos: new THREE.Vector3(-18, 0, 4), variation: 0, stationary: false },
-                { id: 'slayer_3', type: 'slayer', pos: new THREE.Vector3(0, 0, 36), variation: 0, stationary: false },
+                // Order wardens patrolling the streets
+                { id: 'warden_1', type: 'warden', pos: new THREE.Vector3(14, 0, 42), variation: 0, stationary: false },
+                { id: 'warden_2', type: 'warden', pos: new THREE.Vector3(-18, 0, 4), variation: 0, stationary: false },
+                { id: 'warden_3', type: 'warden', pos: new THREE.Vector3(0, 0, 36), variation: 0, stationary: false },
 
                 // Stall merchants (stationary, Style 0)
                 { id: 'merchant_ramen', type: 'normal', pos: new THREE.Vector3(8, 0, 16.2), rotationY: Math.PI, variation: 0, stationary: true },
@@ -2271,12 +2520,46 @@ export const GameWorld: React.FC = () => {
                          if (pIdx < numPoles) {
                              instPole.setMatrixAt(pIdx, makeMatrix(c.x, 2, c.z));
                              instRedLantern.setMatrixAt(pIdx, makeMatrix(c.x, 4, c.z));
+                             lanternGlowPts.push(c.x, 4.2, c.z);
                              pIdx++;
                          }
                      });
                 }
             }
             environmentGrp.add(instPole, instRedLantern);
+
+            // Warm glow halos around every lantern head + soft light pools on the
+            // pavement below. Two Points systems (two draw calls), additive, no
+            // lights added - the night street reads premium for almost free.
+            {
+                const glowTexL = makeGlowTexture();
+                const n = lanternGlowPts.length / 3;
+                const headGeo = new THREE.BufferGeometry();
+                headGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(lanternGlowPts), 3));
+                const headMat = new THREE.PointsMaterial({ map: glowTexL, color: 0xff7733, size: 5.5, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                environmentGrp.add(new THREE.Points(headGeo, headMat));
+                const poolArr = new Float32Array(n * 3);
+                for (let i = 0; i < n; i++) { poolArr[i*3] = lanternGlowPts[i*3]; poolArr[i*3+1] = 0.15; poolArr[i*3+2] = lanternGlowPts[i*3+2]; }
+                const poolGeo = new THREE.BufferGeometry();
+                poolGeo.setAttribute('position', new THREE.BufferAttribute(poolArr, 3));
+                const poolMat = new THREE.PointsMaterial({ map: glowTexL, color: 0xff5511, size: 10, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                environmentGrp.add(new THREE.Points(poolGeo, poolMat));
+            }
+
+            // Fallen petals scattered over the streets (one InstancedMesh)
+            {
+                const petalGeom = new THREE.CircleGeometry(0.09, 6);
+                const petalMat = new THREE.MeshBasicMaterial({ color: 0xffb7c5, transparent: true, opacity: 0.85 });
+                const petals = new THREE.InstancedMesh(petalGeom, petalMat, 260);
+                const pd = new THREE.Object3D();
+                for (let i = 0; i < 260; i++) {
+                    pd.position.set((Math.random() - 0.5) * 80, 0.12 + Math.random() * 0.02, (Math.random() - 0.5) * 100);
+                    pd.rotation.set(-Math.PI / 2, 0, Math.random() * Math.PI * 2);
+                    pd.updateMatrix();
+                    petals.setMatrixAt(i, pd.matrix);
+                }
+                environmentGrp.add(petals);
+            }
             
             // Add decorative trees/bamboo around the edges
             const bambooMat = new THREE.MeshStandardMaterial({ color: 0x3e5a3a, roughness: 0.8 });
@@ -2315,7 +2598,7 @@ export const GameWorld: React.FC = () => {
             environmentGrp.add(dummyGrp);
             colliders.push({box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(8, 1, 5), new THREE.Vector3(1, 4, 1))});
 
-            // Traditional military banner flags (Nobori) printed with family crest and slayer markings
+            // Traditional military banner flags (Nobori) printed with the Order crest
             const bannerPositions = [
                 {x: -4.5, y: 0.2, z: 9.8},
                 {x: 4.5, y: 0.2, z: 9.8},
@@ -2339,7 +2622,7 @@ export const GameWorld: React.FC = () => {
                 bArm.rotation.z = Math.PI / 2; bArm.position.set(0.6, 6.0, 0); bArm.castShadow = true;
                 bGroup.add(bArm);
                 
-                // Create specialized clan crest texture with "Destroy / Slayer" (滅) kanji
+                // Create specialized clan crest texture with moon and slash kanji
                 const bCanvas = document.createElement('canvas'); bCanvas.width = 64; bCanvas.height = 128;
                 const bCtx = bCanvas.getContext('2d')!;
                 bCtx.fillStyle = bIdx % 2 === 0 ? '#121212' : '#881111';
@@ -2349,8 +2632,8 @@ export const GameWorld: React.FC = () => {
                 bCtx.beginPath(); bCtx.arc(32, 32, 16, 0, Math.PI*2); bCtx.stroke();
                 bCtx.fillStyle = '#ffffff';
                 // Japanese kanji text labels
-                bCtx.font = 'bold 24px sans-serif'; bCtx.fillText('滅', 20, 78);
-                bCtx.font = 'bold 16px sans-serif'; bCtx.fillText('竈', 24, 110);
+                bCtx.font = 'bold 24px sans-serif'; bCtx.fillText('月', 20, 78);
+                bCtx.font = 'bold 16px sans-serif'; bCtx.fillText('斬', 24, 110);
                 
                 const bTex = new THREE.CanvasTexture(bCanvas); bTex.magFilter = THREE.NearestFilter;
                 const bMat = new THREE.MeshStandardMaterial({map: bTex, roughness: 1.0, side: THREE.DoubleSide});
@@ -2370,7 +2653,7 @@ export const GameWorld: React.FC = () => {
                 {x: 0, y: 4, z: -streetWidth*1.5 - 3, color: 0xffab47, intensity: 5.0} // Training Plaza light
             ];
             
-            lightPoints.forEach(lp => {
+            lightPoints.slice(0, isMobileDevice ? 3 : lightPoints.length).forEach(lp => {
                 const pLight = new THREE.PointLight(lp.color, lp.intensity, 18);
                 pLight.position.set(lp.x, lp.y, lp.z);
                 pLight.userData = { baseIntensity: lp.intensity, phaseOffset: Math.random() * 12 };
@@ -2463,6 +2746,41 @@ export const GameWorld: React.FC = () => {
             instSteps.instanceMatrix.needsUpdate = true;
             environmentGrp.add(instSteps);
 
+            // Fireflies drifting over the trail + low ground mist sheets (one
+            // draw call each, additive glow points - premium night-forest feel)
+            {
+                const nff = isMobileDevice ? 40 : 80;
+                const ffPos = new Float32Array(nff * 3);
+                const ffBase = new Float32Array(nff * 3);
+                const ffPhase = new Float32Array(nff);
+                for (let i = 0; i < nff; i++) {
+                    ffBase[i*3] = THREE.MathUtils.randFloatSpread(160);
+                    ffBase[i*3+1] = 0.6 + Math.random() * 3.2;
+                    ffBase[i*3+2] = THREE.MathUtils.randFloatSpread(160);
+                    ffPhase[i] = Math.random() * Math.PI * 2;
+                }
+                ffPos.set(ffBase);
+                const ffGeo = new THREE.BufferGeometry();
+                ffGeo.setAttribute('position', new THREE.BufferAttribute(ffPos, 3));
+                const ffMat = new THREE.PointsMaterial({ map: makeGlowTexture(), color: 0xaaff88, size: 0.9, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                const ff = new THREE.Points(ffGeo, ffMat);
+                ff.name = 'fireflies';
+                ff.userData.base = ffBase; ff.userData.phase = ffPhase;
+                environmentGrp.add(ff);
+
+                const nm = isMobileDevice ? 24 : 40;
+                const mArr = new Float32Array(nm * 3);
+                for (let i = 0; i < nm; i++) {
+                    mArr[i*3] = THREE.MathUtils.randFloatSpread(170);
+                    mArr[i*3+1] = 0.5 + Math.random() * 0.4;
+                    mArr[i*3+2] = THREE.MathUtils.randFloatSpread(170);
+                }
+                const mistGeo = new THREE.BufferGeometry();
+                mistGeo.setAttribute('position', new THREE.BufferAttribute(mArr, 3));
+                const mistMat = new THREE.PointsMaterial({ map: makeGlowTexture(), color: 0x6a9aaa, size: 17, transparent: true, opacity: 0.055, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+                environmentGrp.add(new THREE.Points(mistGeo, mistMat));
+            }
+
             const bambooMat = new THREE.MeshStandardMaterial({ color: 0x2e4a2a, roughness: 0.8 });
             const instBamboo = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.3, 0.4, 25, 6), bambooMat, isMobileDevice?150:400);
             instBamboo.castShadow = !isMobileDevice;
@@ -2496,8 +2814,8 @@ export const GameWorld: React.FC = () => {
             for(let i=0; i< (isMobileDevice?15:30); i++){
                 const demonTypeRand = Math.random();
                 let typeStr = 'normal';
-                if (demonTypeRand > 0.85) typeStr = 'spider_demon';
-                else if (demonTypeRand > 0.95) typeStr = 'lower_moon';
+                if (demonTypeRand > 0.95) typeStr = 'greater_spawn';
+                else if (demonTypeRand > 0.85) typeStr = 'silk_spawn';
                 
                 const e = buildEnemy(typeStr);
                 const angle = Math.random() * Math.PI * 2; const dist = 20 + Math.random() * 60;
@@ -2505,7 +2823,7 @@ export const GameWorld: React.FC = () => {
                 
                 // Demonic Rank Generation
                 const ranks = ['Low', 'Mid', 'High'];
-                const rankIdx = (typeStr === 'lower_moon' ? 2 : (typeStr === 'spider_demon' ? 1 : 0));
+                const rankIdx = (typeStr === 'greater_spawn' ? 2 : (typeStr === 'silk_spawn' ? 1 : 0));
                 const rankStr = ranks[rankIdx];
                 const rankMult = 1.0 + (rankIdx * 1.5); // 1.0, 2.5, 4.0
                 
@@ -2520,7 +2838,7 @@ export const GameWorld: React.FC = () => {
                 });
             }
 
-            // Spawn 3 Sacred Spider-Cocoons physically around Mount Natagumo forest depths
+            // Spawn 3 Sacred Spider-Cocoons physically around Mount Kurenai forest depths
             const cocoonPositions = [
                 { id: 'cocoon_alpha', name: 'Scarlet Cocoon (Alpha)', pos: new THREE.Vector3(-25, 0, 15), color: 0xff3355, emissive: 0xaa0033 },
                 { id: 'cocoon_beta', name: 'Amethyst Cocoon (Beta)', pos: new THREE.Vector3(25, 0, -25), color: 0xb533ff, emissive: 0x4400aa },
@@ -2594,15 +2912,16 @@ export const GameWorld: React.FC = () => {
             environmentGrp.add(buildToriiGate(-35, 0, 0, Math.PI/2, 1.5));
 
             // Boss Demon
-            const bossVariations = ['boss', 'upper_moon'];
+            const bossVariations = ['boss', 'elder_spawn'];
             const bossType = bossVariations[Math.floor(Math.random()*bossVariations.length)];
             const boss = buildEnemy(bossType);
             boss.group.position.set(0, 0, -20);
+            audioManager.playVoice('boss_roar', { volume: 1.0, cooldown: 10000 });
             environmentGrp.add(boss.group);
             stateRef.current.enemies.push({ 
                 id:'boss', group: boss.group, type:'boss', 
-                demonicRank: bossType === 'upper_moon' ? 'Upper Moon' : 'Lower Moon', rankMult: bossType === 'upper_moon' ? 6.0 : 3.0,
-                active:true, health: bossType === 'upper_moon' ? 6000 : 3000, maxHealth: bossType === 'upper_moon' ? 6000 : 3000, velocity: new THREE.Vector3(), box: new THREE.Box3(), animParams: boss, damageTimer: 0, actionTimer: 0, actionState: 'idle' 
+                demonicRank: bossType === 'elder_spawn' ? 'Elder Horror' : 'Thread Horror', rankMult: bossType === 'elder_spawn' ? 6.0 : 3.0,
+                active:true, health: bossType === 'elder_spawn' ? 6000 : 3000, maxHealth: bossType === 'elder_spawn' ? 6000 : 3000, velocity: new THREE.Vector3(), box: new THREE.Box3(), animParams: boss, damageTimer: 0, actionTimer: 0, actionState: 'idle' 
             });
         }
         
@@ -2645,11 +2964,26 @@ export const GameWorld: React.FC = () => {
     let lastTime = performance.now();
     let animId: number;
 
+    let dynAcc = 0, dynN = 0, dynScale = 1;
     const gameLoop = (timeNow: number) => {
       animId = requestAnimationFrame(gameLoop);
       const time = timeNow / 1000;
       let realDelta = Math.min((timeNow - lastTime) / 1000, 0.1);
       lastTime = timeNow;
+
+      // Adaptive resolution (phones only): if the GPU can't hold ~40fps, step the render scale down
+      // (1 -> 0.85 -> 0.7). Never goes back up, so no oscillation. Skipped while paused/hidden.
+      if (isMobileDevice && !(stateRef.current as any).menuOpenSync && realDelta < 0.1) {
+        dynAcc += realDelta; dynN++;
+        if (dynAcc >= 2.5) {
+          const avg = dynAcc / dynN; dynAcc = 0; dynN = 0;
+          if (avg > 0.026 && dynScale > 0.7) {
+            dynScale = dynScale === 1 ? 0.85 : 0.7;
+            renderer.setPixelRatio(dynScale); composer.setPixelRatio(dynScale);
+            renderer.setSize(width, height); composer.setSize(width, height);
+          }
+        }
+      }
 
       const s = stateRef.current;
       
@@ -2662,6 +2996,9 @@ export const GameWorld: React.FC = () => {
           timeMultiplier = 0.25; // Majestic boss defeat camera slow-mo
       } else if (s.stage === 'forest' && activeThreats === 0) {
           timeMultiplier = 0.35; // Stage clear slow-mo
+      } else if (s.activeCutscene === 'bossArrival' && ((s as any).__csSlow || 0) > 0) {
+          (s as any).__csSlow -= realDelta;
+          timeMultiplier = 0.35; // Descent impact slow-mo - cutscene-only, never player combat
       }
       realDelta *= timeMultiplier;
       
@@ -2675,14 +3012,14 @@ export const GameWorld: React.FC = () => {
       // State transition checks
       if (currentLoadedStage !== s.stage) { loadStage(s.stage); }
       
-      let isPaused = s.activeDialog !== null || s.activeCutscene !== null || menuOpen || s.activeTip !== null || activeShop !== null;
+      let isPaused = s.activeDialog !== null || s.activeCutscene !== null || s.menuOpenSync === true || s.activeTip !== null || s.activeShopSync != null || s.rotateGate === true; // React state mirrored into stateRef - the engine effect's own closure is stale once running
       
       // Update persistent updates
       if (!isPaused && s.health > 0) {
           if (s.questsProgress) {
               s.questsProgress.timeSpent = (s.questsProgress.timeSpent || 0) + delta;
           }
-          if (s.wisteriaHealActive) {
+          if (s.moonpetalHealActive) {
               s.health = Math.min(s.maxHealth, s.health + 2.5 * delta);
               if (Math.random() < 0.08) spawnParticles(s.position, 0xe8bdff, 1, 'wind');
           }
@@ -2728,6 +3065,7 @@ export const GameWorld: React.FC = () => {
             else if (s.comboWindow > 0) { s.attackPhase++; }
             s.attackTimer = 0; s.attackType = 'normal'; s.comboWindow = 0;
             audioManager.playSlash();
+            audioManager.playVoiceRandom(['atk_kiai_1','atk_kiai_2','atk_kiai_3'], { chance: 0.55, cooldown: 400 });
             keys['j'] = false; s.input.attack = false; // consume trigger
         }
         
@@ -2737,6 +3075,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'water'; s.stamina -= 30; s.velocity.y = 10; s.isOnFloor = false;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playWater();
+            audioManager.playVoice('skill_riptide', { volume: 1.0, cooldown: 600 });
             keys['o'] = false; s.input.skill1 = false;
         }
 
@@ -2745,6 +3084,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'fire'; s.stamina -= 50;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playFire();
+            audioManager.playVoice('skill_blooddance', { volume: 1.0, cooldown: 600 });
             keys['l'] = false; s.input.skill2 = false;
         }
 
@@ -2753,6 +3093,7 @@ export const GameWorld: React.FC = () => {
             s.isAttacking = true; s.attackPhase = 1; s.attackTimer = 0; s.attackType = 'thunder'; s.stamina -= 40;
             if (s.questsProgress) s.questsProgress.skills = (s.questsProgress.skills || 0) + 1;
             audioManager.playThunder();
+            audioManager.playVoice('skill_stormstep', { volume: 1.0, cooldown: 600 });
             keys['u'] = false; s.input.skill3 = false;
         }
 
@@ -2762,6 +3103,7 @@ export const GameWorld: React.FC = () => {
             s.invulnTimer = Math.max(s.invulnTimer, 0.4); // I-frames
             if (s.questsProgress) s.questsProgress.dashes = (s.questsProgress.dashes || 0) + 1;
             audioManager.playDash();
+            audioManager.playVoiceRandom(['dash_voice'], { chance: 0.4, cooldown: 900 });
             spawnParticles(s.position, 0xffffff, 15, 'wind');
             keys['k'] = false; keys['shift'] = false; s.input.dash = false;
         }
@@ -2805,7 +3147,7 @@ export const GameWorld: React.FC = () => {
       
       if (!s.isDashing && !s.isAttacking && s.stamina < s.maxStamina) {
           if (inputLength === 0) {
-             s.stamina += 40 * delta; // Total concentration breathing
+             s.stamina += 40 * delta; // full moon focus regen
              if (Math.random() < 0.1) spawnParticles(s.position, 0x00ff88, 1, 'magic');
           } else {
              s.stamina += 15 * delta;
@@ -2856,10 +3198,30 @@ export const GameWorld: React.FC = () => {
       const getPBox = (px:number, py:number, pz:number) => playerBox.set(new THREE.Vector3(px-pR, py, pz-pR), new THREE.Vector3(px+pR, py+pH, pz+pR));
       const checkCol = (b: THREE.Box3) => colliders.some(c => b.intersectsBox(c.box));
 
-      getPBox(s.position.x + moveDelta.x, s.position.y, s.position.z);
-      if (!checkCol(playerBox)) s.position.x += moveDelta.x; else s.velocity.x = 0;
-      getPBox(s.position.x, s.position.y, s.position.z + moveDelta.z);
-      if (!checkCol(playerBox)) s.position.z += moveDelta.z; else s.velocity.z = 0;
+      // Depenetration rescue: if the player is already inside a collider (e.g. a
+      // high-speed skill tunneled through a thin wall on a low-fps phone), push
+      // out along the smallest escape axis instead of soft-locking forever.
+      getPBox(s.position.x, s.position.y, s.position.z);
+      const stuckIn = colliders.find(c => playerBox.intersectsBox(c.box));
+      if (stuckIn) {
+          const b = stuckIn.box;
+          const escX1 = (s.position.x + pR) - b.min.x, escX2 = b.max.x - (s.position.x - pR);
+          const escZ1 = (s.position.z + pR) - b.min.z, escZ2 = b.max.z - (s.position.z - pR);
+          const mX = Math.min(escX1, escX2), mZ = Math.min(escZ1, escZ2);
+          if (mX < mZ) s.position.x += (escX1 < escX2 ? -(escX1 + 0.06) : (escX2 + 0.06));
+          else s.position.z += (escZ1 < escZ2 ? -(escZ1 + 0.06) : (escZ2 + 0.06));
+      }
+
+      // Substep large per-frame moves (low-fps phones + Stormstep/dash speeds can
+      // otherwise tunnel straight through thin colliders).
+      const subSteps = Math.max(1, Math.min(8, Math.ceil(Math.max(Math.abs(moveDelta.x), Math.abs(moveDelta.z)) / 0.6)));
+      const stepX = moveDelta.x / subSteps, stepZ = moveDelta.z / subSteps;
+      for (let ss = 0; ss < subSteps; ss++) {
+          getPBox(s.position.x + stepX, s.position.y, s.position.z);
+          if (!checkCol(playerBox)) s.position.x += stepX; else { s.velocity.x = 0; break; }
+          getPBox(s.position.x, s.position.y, s.position.z + stepZ);
+          if (!checkCol(playerBox)) s.position.z += stepZ; else { s.velocity.z = 0; break; }
+      }
 
       // World boundary: soft radial wall around the stage so the player can never walk
       // out of the playable area into empty sky/fog (content lives within ~90m of origin,
@@ -2891,7 +3253,7 @@ export const GameWorld: React.FC = () => {
       
       const wF = (s.isDashing || s.isAttacking) ? 0 : inputLength;
       
-      // Breathing / Idle
+      // Moonflow / Idle
       let headRotY = 0;
       let headRotX = 0;
       
@@ -2995,7 +3357,7 @@ export const GameWorld: React.FC = () => {
           targetBackFlapX = ratio * (Math.PI / 2.8) + gust;
           targetSideFlapsZ = 0.1 + ratio * (Math.PI / 4.5) + Math.abs(gust);
       } else {
-          // Breathing motion
+          // Idle sway motion
           targetBackFlapX = Math.PI / 16 + Math.sin(time * 3.0) * 0.03;
           targetSideFlapsZ = 0.05 + Math.sin(time * 3.0) * 0.02;
       }
@@ -3010,14 +3372,14 @@ export const GameWorld: React.FC = () => {
       playerObj.lFlapPivot.rotation.z = THREE.MathUtils.lerp(playerObj.lFlapPivot.rotation.z, -targetSideFlapsZ, 8 * delta);
       playerObj.rFlapPivot.rotation.z = THREE.MathUtils.lerp(playerObj.rFlapPivot.rotation.z, targetSideFlapsZ, 8 * delta);
       
-      // Update Sword Dimension based on Haganezuka refinements
+      // Update Sword Dimension based on Genta refinements
       if (playerObj.swordGrp) {
           const refinements = s.swordRefinements || 0;
           const targetSwordScale = 1.0 + refinements * 0.16; // grows larger and more legendary!
           playerObj.swordGrp.scale.set(targetSwordScale, targetSwordScale, targetSwordScale);
       }
 
-      // 2. Glowing katana core breathing animations matching Breathing technique colors
+      // 2. Glowing katana core animations matching Moonflow style colors
       if (playerObj.swordGlowMat) {
           if (s.isAttacking || s.comboWindow > 0) {
               if (s.attackType === 'water') {
@@ -3057,7 +3419,7 @@ export const GameWorld: React.FC = () => {
                   spawnParticles(currentTipWorld, trailColor, pCount, pType);
               }
           } else {
-              // Idle breathing style glow (Water is Tanjiro's default style)
+              // Idle style glow (Moonflow is Ren's default)
               playerObj.swordGlowMat.color.setHex(0x00aaff);
               playerObj.swordGlowMat.opacity = 0.45 + Math.sin(time * 4) * 0.15;
           }
@@ -3153,7 +3515,7 @@ export const GameWorld: React.FC = () => {
               if (s.attackTimer >= 0.25) { s.comboWindow = 0.3; s.isAttacking = false; }
           }
           else if (s.attackType === 'water') {
-              // Water Wheel (Jump spin)
+              // Riptide (jump spin)
               playerObj.group.rotation.x = phase * Math.PI * 4;
               playerObj.rArm.rotation.x = Math.PI;
               dmgMult = 2.0; range = 4.0;
@@ -3176,7 +3538,7 @@ export const GameWorld: React.FC = () => {
               if (s.attackTimer >= 0.5) { s.isAttacking = false; playerObj.group.rotation.x = 0; }
           }
           else if (s.attackType === 'fire') {
-              // Hinokami Kagura (Forward spin clear blue sky)
+              // Blood Moon Dance (Forward spin clear blue sky)
               playerObj.group.rotation.y = s.rotation + phase * Math.PI * 6;
               playerObj.rArm.rotation.x = Math.PI/2; playerObj.rArm.rotation.z = Math.PI/2;
               dmgMult = 4.0; range = 6.0; knockback = 20;
@@ -3202,7 +3564,7 @@ export const GameWorld: React.FC = () => {
               if (s.attackTimer >= 0.5) { s.isAttacking = false; }
           }
           else if (s.attackType === 'thunder') {
-              // Thunder Breathing: First Form - Thunder Flash (Ultra-fast teleport slash)
+              // Stormstep - Skyrend (Ultra-fast teleport slash)
               playerObj.group.rotation.y = s.rotation;
               // Aerodynamic forward-pointing arm pose
               playerObj.lArm.rotation.x = Math.PI - 0.2;
@@ -3265,7 +3627,7 @@ export const GameWorld: React.FC = () => {
                         const isCrit = Math.random() < 0.25;
                         let dmgMultFromShop = (s.slashDamageMult || 1.0);
                         if (s.ramenBuffActive) dmgMultFromShop *= 1.20;
-                        if (s.swordRefinements) dmgMultFromShop *= (1 + s.swordRefinements * 0.15); // Haganezuka refinement 15% per level
+                        if (s.swordRefinements) dmgMultFromShop *= (1 + s.swordRefinements * 0.15); // Genta refinement 15% per level
                         const critMultFromShop = isCrit ? (s.critDamageMult || 2.0) : 1.0;
                         const finalMult = dmgMult * critMultFromShop * dmgMultFromShop;
                         const dmg = Math.floor((Math.random() * 8 + 8) * finalMult * (1 + (s.level - 1) * 0.4));
@@ -3313,6 +3675,7 @@ export const GameWorld: React.FC = () => {
                       }
                   } else if (isCrit) {
                       audioManager.playCrit();
+                      audioManager.playVoiceRandom(['crit_shout'], { chance: 0.4, cooldown: 2500 });
                       s.hitStopTimer = 0.08;
                       s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.5);
                   } else {
@@ -3357,7 +3720,15 @@ export const GameWorld: React.FC = () => {
       s.enemies.forEach(e => {
           if (!e.active) return;
           const dToPlayer = e.group.position.distanceTo(s.position);
-          
+
+          // Distance culling for forest demons: beyond fog visibility they are
+          // hidden (draw calls saved) and all AI/anim updates are skipped.
+          if (e.type === 'demon') {
+              const far = dToPlayer > 55;
+              if (e.group.visible !== !far) e.group.visible = !far;
+              if (far) { if (e.damageTimer > 0) e.damageTimer -= delta; return; }
+          }
+
           if (e.animParams && e.animParams.torso && e.type !== 'dummy') {
               const eBreath = Math.sin(time * 3 + e.group.position.x) * 0.03;
               e.animParams.torso.scale.set(1.0 + eBreath * 0.5, 1.0 + eBreath, 1.0 + eBreath * 0.5);
@@ -3707,6 +4078,7 @@ export const GameWorld: React.FC = () => {
                       s.velocity.add(s.position.clone().sub(e.group.position).normalize().multiplyScalar(15));
                       spawnParticles(s.position, 0xff0000, 20, 'blood');
                       audioManager.playDamage();
+                      audioManager.playVoiceRandom(['hurt_1','hurt_2'], { cooldown: 800 });
                       s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.8);
                       s.hitStopTimer = 0.1;
                   }
@@ -3715,6 +4087,7 @@ export const GameWorld: React.FC = () => {
                   s.velocity.add(s.position.clone().sub(e.group.position).normalize().multiplyScalar(15));
                   spawnParticles(s.position, 0xff0000, 20, 'blood');
                   audioManager.playDamage();
+                  audioManager.playVoiceRandom(['hurt_1','hurt_2'], { cooldown: 800 });
                   s.shakeTrauma = Math.min(1.0, s.shakeTrauma + 0.8);
                   s.hitStopTimer = 0.1;
               }
@@ -3761,6 +4134,7 @@ export const GameWorld: React.FC = () => {
           s.slashDamageMult = (s.slashDamageMult || 1.0) * 1.05; // 5% base attack increase per level
           if (s.rankIdx < RANKS.length-1) s.rankIdx++;
           audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
           spawnParticles(s.position, 0xffff00, 100, 'ash'); // level up burst
       }
 
@@ -3773,11 +4147,11 @@ export const GameWorld: React.FC = () => {
               setTipModal(s.activeTip);
           } else if (s.stats.dashes > 0 && !s.tips.water) {
               s.tips.water = true;
-              s.activeTip = { title: 'Water Wheel', text: 'Concentrate your Spirit! Press O (or Skill 1). Costs 30 Spirit. A powerful area attack to strike multiple foes around you.' };
+              s.activeTip = { title: 'Riptide', text: 'Concentrate your Spirit! Press O (or Skill 1). Costs 30 Spirit. A powerful area attack to strike multiple foes around you.' };
               setTipModal(s.activeTip);
           } else if (s.stats.water > 0 && !s.tips.fire) {
               s.tips.fire = true;
-              s.activeTip = { title: 'Fire God', text: 'Unleash your true potential. Press L (or Skill 2). Costs 50 Spirit. A devastating vertical strike that cleaves through strong enemies.' };
+              s.activeTip = { title: 'Blood Moon Dance', text: 'Unleash your true potential. Press L (or Skill 2). Costs 50 Spirit. A devastating vertical strike that cleaves through strong enemies.' };
               setTipModal(s.activeTip);
           }
       }
@@ -3948,7 +4322,7 @@ export const GameWorld: React.FC = () => {
       if (s.saveTimer > 2.0 && gameState === 'playing' && s.health > 0) { // save every 2 seconds
           s.saveTimer = 0;
           try {
-              localStorage.setItem('ds_savegame', obfuscateData({
+              localStorage.setItem('cm_savegame', obfuscateData({
                   stage: s.stage,
                   health: s.health,
                   maxHealth: s.maxHealth,
@@ -3964,8 +4338,8 @@ export const GameWorld: React.FC = () => {
                   critDamageMult: s.critDamageMult,
                   umbrellaGetaActive: s.umbrellaGetaActive,
                   sushiNigiriActive: s.sushiNigiriActive,
-                  wisteriaHealActive: s.wisteriaHealActive,
-                  spiritBreathingMult: s.spiritBreathingMult,
+                  moonpetalHealActive: s.moonpetalHealActive,
+                  spiritFocusMult: s.spiritFocusMult,
                   swordRefinements: s.swordRefinements,
                   acceptedQuests: Array.from(acceptedQuests),
                   hideMainQuests: hideMainQuests,
@@ -3987,13 +4361,13 @@ export const GameWorld: React.FC = () => {
                // Spawn a new demon!
                const demonTypeRand = Math.random();
                let typeStr = 'normal';
-               // Considerably more frequent spider demons and lower moons in night darkness!
+               // Considerably more frequent silk spawns and greater spawns in night darkness!
                if (isNight) {
-                   if (demonTypeRand > 0.4) typeStr = 'spider_demon'; 
-                   if (demonTypeRand > 0.8) typeStr = 'lower_moon';    
+                   if (demonTypeRand > 0.4) typeStr = 'silk_spawn'; 
+                   if (demonTypeRand > 0.8) typeStr = 'greater_spawn';    
                } else {
-                   if (demonTypeRand > 0.85) typeStr = 'spider_demon';
-                   if (demonTypeRand > 0.95) typeStr = 'lower_moon';
+                   if (demonTypeRand > 0.85) typeStr = 'silk_spawn';
+                   if (demonTypeRand > 0.95) typeStr = 'greater_spawn';
                }
                
                const e = buildEnemy(typeStr);
@@ -4009,7 +4383,7 @@ export const GameWorld: React.FC = () => {
                e.group.position.set(boundedX, 0, boundedZ);
                
                const ranks = ['Low', 'Mid', 'High'];
-               const rankIdx = (typeStr === 'lower_moon' ? 2 : (typeStr === 'spider_demon' ? 1 : 0));
+               const rankIdx = (typeStr === 'greater_spawn' ? 2 : (typeStr === 'silk_spawn' ? 1 : 0));
                const rankStr = ranks[rankIdx];
                const nightMult = isNight ? 1.4 : 1.0;
                const rankMult = (1.0 + (rankIdx * 1.5)) * nightMult;
@@ -4118,6 +4492,20 @@ export const GameWorld: React.FC = () => {
           if (ghostInstanced.instanceColor) ghostInstanced.instanceColor.needsUpdate = true;
       }
       
+      // Firefly drift (forest only; the object exists only there)
+      const ffObj = environmentGrp.getObjectByName('fireflies') as THREE.Points | undefined;
+      if (ffObj) {
+          const posA = ffObj.geometry.attributes.position as THREE.BufferAttribute;
+          const base = ffObj.userData.base as Float32Array; const ph = ffObj.userData.phase as Float32Array;
+          const tt = timeNow / 1000;
+          for (let i = 0; i < ph.length; i++) {
+              posA.array[i*3] = base[i*3] + Math.sin(tt * 0.6 + ph[i]) * 1.2;
+              posA.array[i*3+1] = base[i*3+1] + Math.sin(tt * 0.9 + ph[i] * 1.7) * 0.5;
+              posA.array[i*3+2] = base[i*3+2] + Math.cos(tt * 0.5 + ph[i]) * 1.2;
+          }
+          posA.needsUpdate = true;
+      }
+
       // Weather Update
       const stage = s.stage;
       if (stage === 'village' || stage === 'forest' || stage === 'cave' || stage === 'peak' || stage === 'boss') {
@@ -4187,8 +4575,13 @@ export const GameWorld: React.FC = () => {
       playerObj.group.visible = (s.invulnTimer <= 0) || Math.floor(timeNow / 100) % 2 === 0;
 
       // Camera Controller
-      const tCamPos = s.position.clone().add(new THREE.Vector3(0, 10, 16));
-      if (s.attackType === 'fire' && s.isAttacking) tCamPos.z += 5; // zoom out for big skill
+      // GoW-feel: closer, lower, slightly over-the-shoulder follow cam. Same pitch
+      // as the old (0,10,16) offset (~31 deg down) so combat readability and the
+      // fixed-axis control mapping are unchanged. Middle distance: tight enough to
+      // feel intimate, far enough that the obstruction clamp still has room to work
+      // in the dense forest (verified at phone viewport).
+      const tCamPos = s.position.clone().add(new THREE.Vector3(0.8, 6.5, 11));
+      if (s.attackType === 'fire' && s.isAttacking) tCamPos.z += 4; // zoom out for big skill
       
       let shakeOffsetX = 0;
       let shakeOffsetY = 0;
@@ -4214,8 +4607,11 @@ export const GameWorld: React.FC = () => {
               camBox.set(new THREE.Vector3(px - CAM_CLR, py - CAM_CLR, pz - CAM_CLR), new THREE.Vector3(px + CAM_CLR, py + CAM_CLR, pz + CAM_CLR));
               return colliders.some(c => camBox.intersectsBox(c.box));
           };
+          // Scan from 12% out: a tree/pillar just behind the player (inside the
+          // first 30% of the segment) was previously invisible to this clamp and
+          // could park a trunk between camera and player for the whole fight.
           let hitT = -1;
-          for (let t = 0.3; t <= 1.0001; t += 0.05) {
+          for (let t = 0.12; t <= 1.0001; t += 0.05) {
               if (camPointBlocked(headPos.x + camSeg.x * t, headPos.y + camSeg.y * t, headPos.z + camSeg.z * t)) { hitT = t; break; }
           }
           if (hitT > 0) {
@@ -4261,12 +4657,170 @@ export const GameWorld: React.FC = () => {
                   tCamPos.set(0, 5, 20); tLook.copy(s.position).add(new THREE.Vector3(0, 2, 0));
               }
           } else if (cutsceneId === 'bossArrival') {
+              // Moonweaver Descent: fog approach -> descent -> eyes-first -> reveal -> Ren -> return
               if (idx === 0) {
-                  tCamPos.set(0, 18, -48); tLook.set(0, 6, -20);
+                  tCamPos.set(0, 0.8, 12); tLook.set(0, 2.5, -20);           // ankle-height across the floor
               } else if (idx === 1) {
-                  tCamPos.set(-6, 3, -28); tLook.set(0, 1.6, -20);
+                  tCamPos.set(3.5, 2.0, -4); tLook.set(0, 12, -20);          // tilt up to catch the fall
               } else if (idx === 2) {
+                  tCamPos.set(1.4, 2.4, -14.5); tLook.set(0, 3.6, -20);      // close on the eyes
+              } else if (idx === 3) {
+                  tCamPos.set(-2.5, 5.5, -9); tLook.set(0, 3.2, -20);        // pull back, low hero angle up at her
+              } else if (idx === 4) {
+                  tCamPos.copy(s.position).add(new THREE.Vector3(2, 2.2, 6)); tLook.copy(s.position).add(new THREE.Vector3(0, 1.5, 0)); // cut to Ren
+              } else {
                   tCamPos.copy(s.position).add(new THREE.Vector3(0, 3, 7)); tLook.copy(s.position).add(new THREE.Vector3(0, 1.2, -3));
+              }
+              tCamPos.add(new THREE.Vector3(shakeOffsetX, shakeOffsetY, 0)); // impact shake applies in-scene too
+          }
+          // Cinematic slow push-in within each cutscene beat
+          const beatKey = s.activeCutscene + '|' + (s.cutsceneStepIdx || 0);
+          if ((s as any).__csBeat !== beatKey) { (s as any).__csBeat = beatKey; (s as any).__csDrift = 0; }
+          (s as any).__csDrift = Math.min(((s as any).__csDrift || 0) + realDelta * 0.22, 2.2);
+          tCamPos.addScaledVector(tLook.clone().sub(tCamPos).normalize(), (s as any).__csDrift);
+
+          // Moonweaver Descent FX - cutscene-only props, live in environmentGrp so
+          // loadStage clears them automatically when the boss stage loads.
+          if (s.activeCutscene === 'bossArrival') {
+              let fx = environmentGrp.getObjectByName('descentFx') as THREE.Group;
+              if (!fx) {
+                  fx = new THREE.Group(); fx.name = 'descentFx';
+                  const glow = makeGlowTexture();
+                  const fogN = 26; const fogPos = new Float32Array(fogN * 3);
+                  for (let i = 0; i < fogN; i++) { fogPos[i*3] = -16 + Math.random()*32; fogPos[i*3+1] = 0.3 + Math.random()*0.7; fogPos[i*3+2] = -30 + Math.random()*22; }
+                  const fogGeom = new THREE.BufferGeometry(); fogGeom.setAttribute('position', new THREE.BufferAttribute(fogPos, 3));
+                  const fog = new THREE.Points(fogGeom, new THREE.PointsMaterial({ map: glow, color: 0x5a7a96, size: 9, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+                  fog.name = 'fog'; fx.add(fog);
+                  const fig = new THREE.Group(); fig.name = 'figure';
+                  const darkMat = new THREE.MeshBasicMaterial({ color: 0x050308, transparent: true });
+                  const robe = new THREE.Mesh(new THREE.ConeGeometry(1.15, 3.4, 10), darkMat);
+                  robe.position.y = 1.7;
+                  const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 12), darkMat);
+                  head.position.y = 3.55;
+                  // ragged hem: tattered silk strips hanging off the robe edge
+                  for (let i = 0; i < 7; i++) {
+                      const a = (i / 7) * Math.PI * 2;
+                      const strip = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.7 + Math.random() * 0.5, 4), darkMat);
+                      strip.position.set(Math.cos(a) * 0.95, 0.25, Math.sin(a) * 0.95);
+                      strip.rotation.x = Math.PI; // point down
+                      strip.rotation.z = (Math.random() - 0.5) * 0.3;
+                      fig.add(strip);
+                  }
+                  // spider-leg splay at the base: thin cones angled out, tips to the floor
+                  for (let i = 0; i < 6; i++) {
+                      const a = (i / 6) * Math.PI * 2 + 0.26;
+                      const leg = new THREE.Mesh(new THREE.ConeGeometry(0.06, 2.4, 4), darkMat);
+                      leg.position.set(Math.cos(a) * 1.05, 0.85, Math.sin(a) * 1.05);
+                      leg.rotation.z = Math.cos(a) * 1.15;
+                      leg.rotation.x = -Math.sin(a) * 1.15;
+                      fig.add(leg);
+                  }
+                  // arm hints from the upper body
+                  for (const sideM of [-1, 1]) {
+                      const arm = new THREE.Mesh(new THREE.ConeGeometry(0.07, 1.5, 4), darkMat);
+                      arm.position.set(sideM * 0.85, 2.2, 0.1);
+                      arm.rotation.z = sideM * 2.2;
+                      fig.add(arm);
+                  }
+                  const eyeL = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xff2438, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  eyeL.position.set(-0.16, 3.6, 0.38); eyeL.scale.set(0.22, 0.22, 1); eyeL.name = 'eyeL';
+                  const eyeR = eyeL.clone(); eyeR.position.x = 0.16; eyeR.name = 'eyeR';
+                  // thread wisps: vertical additive strands that sway and rise off the figure
+                  const wisps = new THREE.Group(); wisps.name = 'wisps';
+                  for (let i = 0; i < 12; i++) {
+                      const w = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: i % 3 === 0 ? 0xff8090 : 0xff4552, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }));
+                      const a = (i / 12) * Math.PI * 2;
+                      w.position.set(Math.cos(a) * (0.5 + Math.random() * 0.7), 0.6 + Math.random() * 3.0, Math.sin(a) * (0.5 + Math.random() * 0.7));
+                      w.scale.set(0.09, 0.7 + Math.random() * 0.6, 1);
+                      w.userData.ph = Math.random() * Math.PI * 2;
+                      w.userData.bx = w.position.x; w.userData.bz = w.position.z; w.userData.by = w.position.y;
+                      wisps.add(w);
+                  }
+                  fig.add(wisps);
+                  fig.add(robe, head, eyeL, eyeR);
+                  fig.position.set(0, 30, -20); fig.visible = false;
+                  fx.add(fig);
+                  const ring = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: 0xff4a55, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+                  ring.position.set(0, 0.4, -20); ring.scale.set(1, 0.6, 1); ring.name = 'ring';
+                  fx.add(ring);
+                  const flareN = 14; const flarePos = new Float32Array(flareN * 3);
+                  for (let i = 0; i < flareN; i++) { flarePos[i*3] = 0; flarePos[i*3+1] = 2.5; flarePos[i*3+2] = -20; }
+                  const flareGeom = new THREE.BufferGeometry(); flareGeom.setAttribute('position', new THREE.BufferAttribute(flarePos, 3));
+                  const flare = new THREE.Points(flareGeom, new THREE.PointsMaterial({ map: glow, color: 0xff5566, size: 0.5, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+                  flare.name = 'flare'; (flare as any).userData.vel = [];
+                  for (let i = 0; i < flareN; i++) { const a = (i / flareN) * Math.PI * 2; (flare as any).userData.vel.push([Math.cos(a) * 6, 2.5 + Math.random() * 2, Math.sin(a) * 6]); }
+                  fx.add(flare);
+                  environmentGrp.add(fx);
+              }
+              const beatIdx = s.cutsceneStepIdx || 0;
+              const beatKey2 = 'fx|' + beatIdx;
+              if ((s as any).__fxBeat !== beatKey2) { (s as any).__fxBeat = beatKey2; (s as any).__fxT = 0; (s as any).__csLand = 0; (s as any).__csFlared = 0; }
+              (s as any).__fxT = ((s as any).__fxT || 0) + realDelta;
+              const ft = (s as any).__fxT as number;
+              const fig = fx.getObjectByName('figure') as THREE.Group;
+              const fog = fx.getObjectByName('fog') as THREE.Points;
+              const ring = fx.getObjectByName('ring') as THREE.Sprite;
+              const flare = fx.getObjectByName('flare') as THREE.Points;
+              fog.rotation.y += realDelta * 0.03;
+              const wisps = fig.getObjectByName('wisps') as THREE.Group;
+              if (wisps) {
+                  const falling = beatIdx === 1 && fig.position.y > 0.5;
+                  wisps.children.forEach((w: any, i: number) => {
+                      const t = ft + w.userData.ph;
+                      w.position.x = w.userData.bx + Math.sin(t * 1.7) * 0.22;
+                      w.position.y = falling ? w.userData.by + 1.2 : w.userData.by + Math.sin(t * 0.9) * 0.35;
+                      w.material.opacity = 0.22 + 0.18 * (0.5 + 0.5 * Math.sin(t * 2.6 + i));
+                      w.scale.y = falling ? 1.9 : 0.7 + 0.3 * (0.5 + 0.5 * Math.sin(t * 1.3));
+                  });
+              }
+              if (beatIdx >= 1) {
+                  fig.visible = true;
+                  if (beatIdx === 1) {
+                      const p = Math.min(ft / 1.7, 1);
+                      fig.position.y = 30 * (1 - p * p);
+                      if (p >= 1 && !(s as any).__csLand) {
+                          (s as any).__csLand = 1;
+                          (s as any).__csSlow = 0.55;
+                          s.shakeTrauma = Math.min((s.shakeTrauma || 0) + 0.8, 1);
+                          ring.userData.t = 0.0001;
+                      }
+                  } else {
+                      fig.position.y = 0;
+                      fig.rotation.y = Math.sin(ft * 1.2) * 0.05;
+                  }
+              }
+              if (ring.userData.t) {
+                  ring.userData.t += realDelta;
+                  const k = Math.min(ring.userData.t / 0.7, 1);
+                  (ring.material as THREE.SpriteMaterial).opacity = 0.9 * (1 - k);
+                  ring.scale.set(2 + k * 12, 1.2 + k * 7, 1);
+              }
+              const eyeL = fig.getObjectByName('eyeL') as THREE.Sprite;
+              const eyeR = fig.getObjectByName('eyeR') as THREE.Sprite;
+              if (beatIdx === 2) {
+                  const op = Math.min(ft / 0.9, 1) * 0.95;
+                  (eyeL.material as THREE.SpriteMaterial).opacity = op;
+                  (eyeR.material as THREE.SpriteMaterial).opacity = op;
+              } else if (beatIdx > 2) {
+                  (eyeL.material as THREE.SpriteMaterial).opacity = 0.95;
+                  (eyeR.material as THREE.SpriteMaterial).opacity = 0.95;
+              }
+              if (beatIdx >= 3) {
+                  if (!(s as any).__csFlared) { (s as any).__csFlared = 1; flare.userData.t = 0.0001; (flare.material as THREE.PointsMaterial).opacity = 0.95; }
+                  if (flare.userData.t) {
+                      flare.userData.t += realDelta;
+                      const k = Math.min(flare.userData.t / 1.2, 1);
+                      const pos = (flare.geometry as THREE.BufferGeometry).attributes.position as THREE.BufferAttribute;
+                      for (let i = 0; i < pos.count; i++) {
+                          pos.setXYZ(i, pos.getX(i) + flare.userData.vel[i][0] * realDelta * (1 - k), pos.getY(i) + flare.userData.vel[i][1] * realDelta * (1 - k), pos.getZ(i) + flare.userData.vel[i][2] * realDelta * (1 - k));
+                      }
+                      pos.needsUpdate = true;
+                      (flare.material as THREE.PointsMaterial).opacity = 0.95 * (1 - k);
+                  }
+              }
+              if (beatIdx >= 4) {
+                  const fade = Math.max(1 - ft / 1.0, 0);
+                  fig.traverse((o: any) => { if (o.material && !o.isSprite) o.material.opacity = fade; });
               }
           }
       }
@@ -4411,7 +4965,7 @@ export const GameWorld: React.FC = () => {
       const targetBloomStrength = 0.5 + (staminaRatio * 2.5) + (pulse * staminaRatio * 1.5);
       bloomPass.strength = THREE.MathUtils.lerp(bloomPass.strength, targetBloomStrength, delta * 3.0);
 
-      composer.render();
+      if (!s.rotateGate) composer.render(); // rotate gate covers the canvas - save the GPU
     };
     
     animId = requestAnimationFrame(gameLoop);
@@ -4461,7 +5015,7 @@ export const GameWorld: React.FC = () => {
       s.stage = 'village';
 
       try {
-          localStorage.setItem('ds_savegame', obfuscateData({
+          localStorage.setItem('cm_savegame', obfuscateData({
               stage: s.stage,
               health: s.health,
               maxHealth: s.maxHealth,
@@ -4477,8 +5031,8 @@ export const GameWorld: React.FC = () => {
               critDamageMult: s.critDamageMult,
               umbrellaGetaActive: s.umbrellaGetaActive,
               sushiNigiriActive: s.sushiNigiriActive,
-              wisteriaHealActive: s.wisteriaHealActive,
-              spiritBreathingMult: s.spiritBreathingMult,
+              moonpetalHealActive: s.moonpetalHealActive,
+              spiritFocusMult: s.spiritFocusMult,
               swordRefinements: s.swordRefinements,
               acceptedQuests: Array.from(acceptedQuests),
               hideMainQuests: hideMainQuests,
@@ -4492,7 +5046,7 @@ export const GameWorld: React.FC = () => {
       setGameState('playing');
   };
 
-  const hasSave = !!localStorage.getItem('ds_savegame');
+  const hasSave = !!localStorage.getItem('cm_savegame');
 
   const startGame = (isNewGame: boolean) => {
       audioManager.init();
@@ -4500,7 +5054,7 @@ export const GameWorld: React.FC = () => {
       
       if (!isNewGame && hasSave) {
           try {
-              const data = deobfuscateData(localStorage.getItem('ds_savegame') || '{}');
+              const data = deobfuscateData(localStorage.getItem('cm_savegame') || '{}');
               s.stage = data.stage || 'village';
               s.health = data.health || 150;
               s.maxHealth = data.maxHealth || 150;
@@ -4519,8 +5073,8 @@ export const GameWorld: React.FC = () => {
               s.critDamageMult = data.critDamageMult || 2.0;
               s.umbrellaGetaActive = !!data.umbrellaGetaActive;
               s.sushiNigiriActive = !!data.sushiNigiriActive;
-              s.wisteriaHealActive = !!data.wisteriaHealActive;
-              s.spiritBreathingMult = data.spiritBreathingMult || 1.0;
+              s.moonpetalHealActive = !!data.moonpetalHealActive;
+              s.spiritFocusMult = data.spiritFocusMult || 1.0;
               s.swordRefinements = data.swordRefinements !== undefined ? data.swordRefinements : 0;
               s.questsProgress = data.questsProgress || { damageDealt: 0, kills: 0, skills: 0, dashes: 0, maxCombo: 0, blocks: 0, timeSpent: 0 };
               
@@ -4567,8 +5121,8 @@ export const GameWorld: React.FC = () => {
           s.critDamageMult = 2.0;
           s.umbrellaGetaActive = false;
           s.sushiNigiriActive = false;
-          s.wisteriaHealActive = false;
-          s.spiritBreathingMult = 1.0;
+          s.moonpetalHealActive = false;
+          s.spiritFocusMult = 1.0;
           s.swordRefinements = 0;
 
           s.lastSyncedHealth = 150;
@@ -4586,23 +5140,28 @@ export const GameWorld: React.FC = () => {
           setLevel(1);
           setRankIndex(0);
           setMon(50);
-          localStorage.removeItem('ds_savegame');
+          localStorage.removeItem('cm_savegame');
       }
       
-      setGameState('playing');
       if (isNewGame) {
-          setCutsceneId('intro');
-          setCutsceneLineIdx(0);
+          setGameState('opening'); // key-art opening cinematic, then straight into play
+      } else {
+          setGameState('playing');
       }
   };
 
+  const finishOpening = () => {
+      stateRef.current.dummyHits = 0;
+      setGameState('playing');
+  };
+
   const advanceDialog = () => {
-      const isSlayer = dialogId ? dialogId.toLowerCase().includes('slayer') : false;
-      const defaultSpeaker = isSlayer ? 'Demon Slayer Guard' : 'Villager';
-      const defaultText = isSlayer 
-        ? 'Maintain total concentration! Forest demons have been very active lately.' 
-        : 'Thank goodness we have the Demon Slayer Corps protecting our humble village!';
-      const defaultMood = isSlayer ? 'urgent' : 'calm';
+      const isWarden = dialogId ? dialogId.toLowerCase().includes('warden') : false;
+      const defaultSpeaker = isWarden ? 'Order Warden' : 'Villager';
+      const defaultText = isWarden 
+        ? 'Maintain full moon focus! Forest demons have been very active lately.' 
+        : 'Thank goodness we have the Moonflow Order protecting our humble village!';
+      const defaultMood = isWarden ? 'urgent' : 'calm';
 
       const diagArr = DIALOGUES[dialogId!] || [
           { speaker: defaultSpeaker, text: defaultText, mood: defaultMood }
@@ -4636,6 +5195,7 @@ export const GameWorld: React.FC = () => {
              setCutsceneLineIdx(0);
           } else if (finishedId === 'bossWin') {
              setGameState('victory');
+             audioManager.playVoice('narr_victory', { volume: 1.0 });
           }
       } else {
           setDialogLineIdx(prev => prev + 1);
@@ -4665,6 +5225,7 @@ export const GameWorld: React.FC = () => {
               s.xp -= req;
               s.level += 1;
               audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
               setTipModal({ title: "Level Up & Promotion!", text: `Congratulations! You climbed to Level ${s.level} and gained stronger stats!` });
           }
           
@@ -4674,6 +5235,7 @@ export const GameWorld: React.FC = () => {
           }));
           
           audioManager.playCrit();
+                      audioManager.playVoiceRandom(['crit_shout'], { chance: 0.4, cooldown: 2500 });
           spawnParticlesRef.current?.(s.position, 0xffff00, 30, 'thunder');
           saveGameData();
       }
@@ -4711,7 +5273,7 @@ export const GameWorld: React.FC = () => {
   const saveDetails = React.useMemo(() => {
       if (!hasSave) return null;
       try {
-          return deobfuscateData(localStorage.getItem('ds_savegame') || '{}');
+          return deobfuscateData(localStorage.getItem('cm_savegame') || '{}');
       } catch (e) {
           return null;
       }
@@ -4728,7 +5290,7 @@ export const GameWorld: React.FC = () => {
       )}
 
       {gameState === 'menu' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#030303] z-50 overflow-y-auto select-none">
+        <div className="absolute inset-0 flex justify-center bg-[#030303] z-50 overflow-y-auto select-none">
             {/* Immersive Dark Crimson Background Gradients */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#1d0606] via-[#050101] to-[#020202]" />
             
@@ -4783,9 +5345,9 @@ export const GameWorld: React.FC = () => {
             })}
 
             {/* Main Interactive Dual-Pane container */}
-            <div className="w-full max-w-7xl mx-auto px-6 min-h-full flex flex-col justify-between py-6 sm:py-12 relative z-10">
+            <div className="w-full max-w-7xl mx-auto px-6 min-h-full my-auto flex flex-col justify-between py-6 sm:py-12 relative z-10">
                 
-                {/* TOP HEADER: Traditional Hanko Branded Signature & Mount Natagumo Arc Marker */}
+                {/* TOP HEADER: Traditional Hanko Branded Signature & Mount Kurenai Arc Marker */}
                 <div className="flex items-center justify-between w-full border-b border-white/5 pb-4">
                     <div className="flex items-center gap-4">
                         {/* Branded Red Hanko Seal (Square Japanese Ink stamp) */}
@@ -4800,8 +5362,8 @@ export const GameWorld: React.FC = () => {
                             <div className="absolute inset-0 bg-white/5 pointer-events-none bg-gradient-radial from-transparent via-transparent to-red-950/40 mix-blend-overlay" />
                         </motion.div>
                         <div>
-                           <div className="text-[10px] uppercase font-mono tracking-[0.25em] text-red-500 font-bold block">Natagumo Sacred Mountain</div>
-                           <div className="text-xs uppercase tracking-[0.1em] text-gray-500 font-light block">Chapter V: The Cursed Spider Threads</div>
+                           <div className="text-[10px] uppercase font-mono tracking-[0.25em] text-red-500 font-bold block">Kurenai Sacred Mountain</div>
+                           <div className="text-xs uppercase tracking-[0.1em] text-gray-500 font-light block">Chapter I: Threads of the Weaver</div>
                         </div>
                     </div>
 
@@ -4814,7 +5376,7 @@ export const GameWorld: React.FC = () => {
                 {/* MIDDLE SECTION: Dynamic Split View */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center flex-1 my-6 overflow-y-auto lg:overflow-visible py-4 scrollbar-thin">
                     
-                    {/* LEFT PANEL: Logo, Slashed Title, Breathing Moon Orb, Controls */}
+                    {/* LEFT PANEL: Logo, Slashed Title, Blood Moon Orb, Controls */}
                     <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left h-full justify-center">
                         
                         {/* Title & Glowing Japanese subtitle */}
@@ -4825,9 +5387,9 @@ export const GameWorld: React.FC = () => {
                               transition={{ duration: 1 }}
                               className="text-amber-500/90 font-mono text-sm uppercase tracking-[0.6em] font-extrabold flex items-center gap-2 justify-center lg:justify-start"
                             >
-                                <span>鬼滅の刃</span>
+                                <span>紅月</span>
                                 <span className="text-white/20">|</span>
-                                <span className="text-red-500 uppercase tracking-[0.3em]">Natagumo Episode</span>
+                                <span className="text-red-500 uppercase tracking-[0.3em]">Kurenai Episode</span>
                             </motion.div>
                             
                             <motion.h1 
@@ -4836,7 +5398,7 @@ export const GameWorld: React.FC = () => {
                               transition={{ duration: 1.2, delay: 0.1 }}
                               className="text-5xl md:text-7xl font-sans font-black tracking-[-0.03em] uppercase bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent leading-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] mt-1 font-sans"
                             >
-                              Demon Slayer
+                              CRIMSON MOON
                             </motion.h1>
 
                             {/* Massive Slash Accent with Blood Moon subtitle */}
@@ -4848,7 +5410,7 @@ export const GameWorld: React.FC = () => {
                             >
                                 <span className="absolute -left-12 -right-12 h-[1px] bg-gradient-to-r from-transparent via-red-600 to-transparent blur-[1px] transform -rotate-1 pointer-events-none" />
                                 <span className="font-mono text-xl md:text-2xl font-black uppercase text-red-500 tracking-[0.45em] drop-shadow-[0_0_15px_rgba(255,0,0,0.85)] flex items-center gap-1">
-                                  BLOOD MOON <span className="animate-pulse">🩸</span>
+                                  THREADS OF THE WEAVER <span className="animate-pulse">🌕</span>
                                 </span>
                             </motion.div>
                         </div>
@@ -4899,14 +5461,14 @@ export const GameWorld: React.FC = () => {
                                     {moonHovered ? '✦ CURST ENERGY BURSTS ✦' : '✦ INTERACTIVE BLOOD ORB ✦'}
                                 </span>
                                 <p className="text-xs text-neutral-400 leading-relaxed font-sans max-w-[200px]">
-                                    Click moon to invoke thunder sparks. Rui’s defensive barrier reaches full zenith!
+                                    Click moon to invoke storm sparks. The Moonweaver's barrier reaches full zenith!
                                 </p>
                             </div>
                         </div>
 
                         {/* Summary Editorial tagline */}
                         <p className="text-sm text-neutral-300 max-w-lg mb-8 leading-relaxed font-sans font-light">
-                           Conquer Natagumo Forest and shatter Lower Moon Five's demon threads. Fluid Water breathing combined with blazing Sunflower strikes. Your blade is the only beacon in the dark crimson forest.
+                           Conquer Kurenai Forest and cut the Moonweaver's soul-threads. Flowing Moonflow forms woven with blazing Blood Moon strikes. Your blade is the only beacon in the dark crimson forest.
                         </p>
 
                         {/* Interactive Main Action Selection */}
@@ -4937,7 +5499,7 @@ export const GameWorld: React.FC = () => {
                                                   LVL {saveDetails.level || 1}
                                               </span>
                                               <span className="font-bold text-gray-300 uppercase">
-                                                  Rank: {saveDetails.rankIdx !== undefined ? RANKS[saveDetails.rankIdx] : 'Mizunoto'}
+                                                  Rank: {saveDetails.rankIdx !== undefined ? RANKS[saveDetails.rankIdx] : 'New Moon'}
                                               </span>
                                               <span className="text-amber-500 flex items-center gap-0.5 font-bold">
                                                   🪙 {saveDetails.mon || 50} MON
@@ -4999,7 +5561,7 @@ export const GameWorld: React.FC = () => {
                                         </div>
                                         <div>
                                             <div className="font-mono text-[10px] uppercase font-black tracking-[0.25em] text-red-400 mb-0.5">INITIATE GAME FLOW</div>
-                                            <div className="font-serif text-xl text-white font-black">Breathe & Enter Mission</div>
+                                            <div className="font-serif text-xl text-white font-black">Focus & Enter Mission</div>
                                         </div>
                                     </div>
                                     <ChevronRight className="w-7 h-7 text-red-500 group-hover:text-red-400 group-hover:translate-x-2.5 transition-all duration-300 shrink-0" />
@@ -5021,7 +5583,7 @@ export const GameWorld: React.FC = () => {
 
                     </div>
 
-                    {/* RIGHT PANEL: Highly detailed Story / Combos / Breathing Techniques handbook tab component */}
+                    {/* RIGHT PANEL: Highly detailed Story / Combos / Moonflow Techniques handbook tab component */}
                     <div className="lg:col-span-6 flex flex-col h-full justify-center pointer-events-auto">
                         <div className="bg-[#0b0303]/75 border border-red-950/40 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col min-h-[420px] max-w-xl mx-auto lg:mx-0 w-full">
                             {/* Spider nest details */}
@@ -5032,7 +5594,7 @@ export const GameWorld: React.FC = () => {
                                 {[
                                   { id: 'lore', label: 'THE EPISODE LORE', icon: BookOpen },
                                   { id: 'combat', label: 'COMBAT DRILLS', icon: Compass },
-                                  { id: 'breathing', label: 'BREATHING MANUAL', icon: Flame }
+                                  { id: 'breathing', label: 'MOONFLOW MANUAL', icon: Flame }
                                 ].map(tab => {
                                   const IconComponent = tab.icon;
                                   const isActive = menuTab === tab.id;
@@ -5070,23 +5632,23 @@ export const GameWorld: React.FC = () => {
                                       >
                                         <div className="flex items-center gap-2 mb-2">
                                            <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
-                                           <h3 className="font-serif text-[15px] font-bold text-red-400 uppercase tracking-wide">Mount Natagumo Shadow</h3>
+                                           <h3 className="font-serif text-[15px] font-bold text-red-400 uppercase tracking-wide">Mount Kurenai Shadow</h3>
                                         </div>
                                         <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-                                          The dark slopes of <span className="text-white font-bold">Mount Natagumo</span> are covered in steel spiderwebs. 
-                                          Together with his synthetic proxy "family," <span className="text-red-400 font-bold">Rui—Lower Moon Five</span> of the Twelve Demon Moons—conducts 
-                                          a profane sacrificial ritual to dismantle the surrounding magical barriers and capture wisteria sap. If he completes this under the zenith of the Blood Moon, he will secure sunlight immunity.
+                                          The dark slopes of <span className="text-white font-bold">Mount Kurenai</span> are covered in steel spiderwebs. 
+                                          Together with her woven proxy "family," <span className="text-red-400 font-bold">Shira the Moonweaver</span> conducts 
+                                          a profane ritual to pull down the village barrier and drink the moonpetal fields dry. If she finishes beneath the zenith of the Blood Moon, every soul in the valley joins her web.
                                         </p>
                                         <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                                          Guided by your mentor, <span className="text-white font-normal">Sakonji Urokodaki</span>, you travel into this webbed domain. 
-                                          Synchronize your breathing rhythms, slice through lower-tier thread weaver spider-scouts, and confront the Lower Moon.
+                                          Guided by your mentor, <span className="text-white font-normal">Master Iwato</span>, you travel into this webbed domain. 
+                                          Synchronize your Moonflow rhythm, slice through lower-tier thread weaver spider-scouts, and confront the Moonweaver.
                                         </p>
                                         
                                         {/* Lore Warning Tip */}
                                         <div className="mt-4 bg-red-950/20 border border-red-950/70 p-3 rounded-lg flex gap-2.5">
                                            <HelpCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5 animate-bounce" />
                                            <p className="text-[10px] text-neutral-400 leading-normal">
-                                             <span className="text-white font-bold">MON COST WARNING:</span> Dying in Mt. Natagumo will transport you back to the village gates, and cost you <span className="text-red-400 font-bold">20 Mon silver coins</span>. Keep health items ready!
+                                             <span className="text-white font-bold">MON COST WARNING:</span> Dying in Mt. Kurenai will transport you back to the village gates, and cost you <span className="text-red-400 font-bold">20 Mon silver coins</span>. Keep health items ready!
                                            </p>
                                         </div>
                                       </motion.div>
@@ -5135,13 +5697,13 @@ export const GameWorld: React.FC = () => {
                                               <span className="w-7 h-7 bg-amber-950/40 border border-amber-500/30 text-amber-400 text-xs flex items-center justify-center rounded font-mono font-bold shrink-0 shadow">E / Key</span>
                                               <div>
                                                  <div className="text-[10px] font-mono text-amber-505 font-extrabold uppercase">INTERACTION</div>
-                                                 <p className="text-[9px] text-gray-400">Speak to Urokodaki, shop merchandise, or use buttons.</p>
+                                                 <p className="text-[9px] text-gray-400">Speak to Iwato, shop merchandise, or use buttons.</p>
                                               </div>
                                            </div>
                                         </div>
 
                                         <div className="bg-red-950/10 border border-red-950/55 p-2.5 rounded-lg text-[10px] text-gray-400">
-                                            <span className="font-extrabold text-white">PRO TACTICAL TIP:</span> Rui is shielded by <span className="text-red-400 font-bold">Three Sacred Spider-Cocoons</span>. They absorb his kinetic damage completely. Always destroy the cocoons first on the battlefield!
+                                            <span className="font-extrabold text-white">PRO TACTICAL TIP:</span> Shira is shielded by <span className="text-red-400 font-bold">Three Sacred Spider-Cocoons</span>. They absorb his kinetic damage completely. Always destroy the cocoons first on the battlefield!
                                         </div>
                                       </motion.div>
                                     )}
@@ -5156,18 +5718,18 @@ export const GameWorld: React.FC = () => {
                                         className="space-y-3.5"
                                       >
                                         <div className="flex items-center justify-between">
-                                            <h3 className="font-serif text-sm font-bold text-red-400 uppercase tracking-wide">🔥 Breathing Archetypes handbook</h3>
+                                            <h3 className="font-serif text-sm font-bold text-red-400 uppercase tracking-wide">🔥 Moonflow Styles handbook</h3>
                                             <span className="text-[9px] font-mono text-gray-500 uppercase tracking-widest">Interactive Audio Preview</span>
                                         </div>
                                         
-                                        {/* Breathing Selector list with real click sfx */}
+                                        {/* Style selector list with real click sfx */}
                                         <div className="space-y-2">
                                            {/* Water style */}
                                            <div className="bg-black/40 hover:bg-black/60 border border-white/5 rounded-xl p-2.5 flex items-center justify-between transition-all group">
                                                <div className="flex items-center gap-3">
                                                    <div className="w-8 h-8 rounded-lg bg-indigo-950/55 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm">💧</div>
                                                    <div>
-                                                       <div className="text-[11px] font-mono text-white font-extrabold uppercase group-hover:text-indigo-400 transition-colors">Water Breathing Style</div>
+                                                       <div className="text-[11px] font-mono text-white font-extrabold uppercase group-hover:text-indigo-400 transition-colors">Moonflow Style</div>
                                                        <div className="text-[9px] text-gray-500">Fluid wave slices, multi-strike stability.</div>
                                                    </div>
                                                </div>
@@ -5184,7 +5746,7 @@ export const GameWorld: React.FC = () => {
                                                <div className="flex items-center gap-3">
                                                    <div className="w-8 h-8 rounded-lg bg-red-950/55 border border-red-500/30 flex items-center justify-center text-red-400 font-bold text-sm">🔥</div>
                                                    <div>
-                                                       <div className="text-[11px] font-mono text-white font-extrabold uppercase group-hover:text-red-400 transition-colors">Hinokami Kagura Style</div>
+                                                       <div className="text-[11px] font-mono text-white font-extrabold uppercase group-hover:text-red-400 transition-colors">Blood Moon Dance Style</div>
                                                        <div className="text-[9px] text-gray-500">Intense solar fire bursts, high stamina damage.</div>
                                                    </div>
                                                </div>
@@ -5201,7 +5763,7 @@ export const GameWorld: React.FC = () => {
                                                <div className="flex items-center gap-3">
                                                    <div className="w-8 h-8 rounded-lg bg-yellow-950/55 border border-yellow-500/30 flex items-center justify-center text-yellow-500 font-bold text-sm">⚡</div>
                                                    <div>
-                                                       <div className="text-[11px] font-mono text-white font-extrabold uppercase group-hover:text-yellow-400 transition-colors">Thunder Breathing Stance</div>
+                                                       <div className="text-[11px] font-mono text-white font-extrabold uppercase group-hover:text-yellow-400 transition-colors">Stormstep Stance</div>
                                                        <div className="text-[9px] text-gray-500">Unleashes crit multiplier spikes.</div>
                                                    </div>
                                                </div>
@@ -5219,8 +5781,8 @@ export const GameWorld: React.FC = () => {
 
                                 {/* Bottom Tab Footer */}
                                 <div className="border-t border-white/5 pt-4 flex items-center justify-between text-[10px] font-mono text-gray-500">
-                                   <span>Active Guild: Demon Slayer Corp</span>
-                                   <span className="text-red-600 font-bold uppercase tracking-widest animate-pulse">NATAGUMO EXCLUSIVES</span>
+                                   <span>Active Guild: Moonflow Order</span>
+                                   <span className="text-red-600 font-bold uppercase tracking-widest animate-pulse">KURENAI EXCLUSIVES</span>
                                 </div>
                             </div>
                         </div>
@@ -5231,7 +5793,7 @@ export const GameWorld: React.FC = () => {
                 {/* BOTTOM FOOTER: Setting Trigger, Controls Indicator, Contribution Label */}
                 <div className="flex flex-col sm:flex-row items-center justify-between w-full border-t border-white/5 pt-4 text-center sm:text-left gap-4">
                     <div className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">
-                       Demon Slayer: Blood Moon Engine v3.45 • © 2026. Made with true design craft.
+                       Crimson Moon: Threads of the Weaver v1.0 • © 2026. Made with true design craft.
                     </div>
                     
                     <div className="flex items-center gap-5">
@@ -5299,18 +5861,18 @@ export const GameWorld: React.FC = () => {
         const boss = stateRef.current.enemies ? stateRef.current.enemies.find(e => e.type === 'boss' && e.active) : null;
         if (!boss) return null;
         const hpPct = Math.max(0, Math.min(100, (boss.health / boss.maxHealth) * 100));
-        const isUpper = boss.demonicRank === 'Upper Moon';
+        const isUpper = boss.demonicRank === 'Elder Horror';
         
         return (
-          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 w-full max-w-xl px-6 z-25 pointer-events-none select-none">
+          <div className="absolute top-64 sm:top-24 left-1/2 transform -translate-x-1/2 w-full max-w-xl px-6 z-25 pointer-events-none select-none">
              <div className="flex flex-col items-center w-full">
                {/* Name & Title */}
                <div className="flex items-center space-x-2.5 mb-2">
                  <span className="text-[9px] tracking-[0.25em] font-mono font-bold text-red-500 uppercase bg-red-950/40 px-2 py-0.5 border border-red-500/20 rounded">
-                   {boss.demonicRank || "Demon Boss"}
+                   {boss.demonicRank || "Horror Boss"}
                  </span>
                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white font-mono drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-                   {isUpper ? "Spider Mother • Rui's Clan" : "Spider Demon Daughter"}
+                   {isUpper ? "Shira • The Moonweaver" : "Weaver Spawn"}
                  </h4>
                </div>
                
@@ -5318,7 +5880,7 @@ export const GameWorld: React.FC = () => {
                <div className="w-full bg-black/70 border border-red-500/30 p-2 rounded-lg flex items-center space-x-3 shadow-[0_0_20px_rgba(255,0,0,0.25)] backdrop-blur-md">
                   {/* Demon symbol indicator */}
                   <div className={`w-6 h-6 rounded-full border flex items-center justify-center font-bold text-[10px] font-mono ${isUpper ? 'border-amber-500 bg-amber-950 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'border-purple-500 bg-purple-950 text-purple-300'} animate-pulse`}>
-                    鬼
+                    ☾
                   </div>
                   {/* Track */}
                   <div className="flex-1 h-3 bg-gray-950 rounded-sm overflow-hidden relative border border-white/5">
@@ -5345,6 +5907,9 @@ export const GameWorld: React.FC = () => {
       })()}
 
       {gameState === 'playing' && cutsceneId === null && (
+        <>
+        {/* Premium cinematic vignette over gameplay (pure CSS, zero GPU cost) */}
+        <div className="absolute inset-0 pointer-events-none z-10" style={{background: 'radial-gradient(ellipse at 50% 42%, transparent 52%, rgba(5,2,8,0.42) 100%)'}} />
         <div className="absolute top-4 left-4 md:top-6 md:left-6 right-4 flex justify-between pointer-events-none z-20">
             {/* Player Stats Corner */}
             <div className="w-full max-w-[220px] sm:max-w-sm [@media(max-height:480px)]:max-w-[180px]">
@@ -5399,7 +5964,7 @@ export const GameWorld: React.FC = () => {
                         </button>
                       </div>
                       <p className="text-xs text-gray-300 font-sans leading-relaxed [@media(max-height:480px)]:hidden">
-                        Strike the oak dummy with your steel <span className="font-bold text-amber-400">3 times</span> to prove your Water stance to Master Urokodaki.
+                        Strike the oak dummy with your steel <span className="font-bold text-amber-400">3 times</span> to prove your Moonflow stance to Master Iwato.
                       </p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="font-mono text-[10px] text-gray-400">Progress:</span>
@@ -5435,7 +6000,7 @@ export const GameWorld: React.FC = () => {
                         </button>
                       </div>
                       <p className="text-xs text-gray-300 font-sans leading-relaxed [@media(max-height:480px)]:hidden">
-                        Speak to <span className="font-bold text-white">Master Urokodaki</span> to lift the village barrier and cross into the Bamboo Forest.
+                        Speak to <span className="font-bold text-white">Master Iwato</span> to lift the village barrier and cross into the Bamboo Forest.
                       </p>
                     </div>
                   </motion.div>
@@ -5539,7 +6104,7 @@ export const GameWorld: React.FC = () => {
                         onClick={() => setOpenMapLabels(!openMapLabels)}
                         title="Toggle Map Overlay"
                     >
-                        <Compass className="w-6 h-6 text-amber-400" />
+                        <Compass className="w-6 h-6 text-red-400" />
                     </button>
                     <button 
                       className="pointer-events-auto p-2 bg-black/50 border border-white/20 rounded-full hover:bg-white/20 transition-colors backdrop-blur-md"
@@ -5556,89 +6121,108 @@ export const GameWorld: React.FC = () => {
                   </div>
                 )}
                 
-                {/* --- Minimap Overlay --- */}
+                {/* --- Minimap Overlay: Moonveil Compass --- */}
                 <AnimatePresence>
                 {openMapLabels && (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="bg-black/60 border-2 border-[#bb8844]/40 p-2 rounded-full w-40 h-40 md:w-48 md:h-48 backdrop-blur-md shadow-[0_0_30px_rgba(187,136,68,0.2)] relative overflow-hidden pointer-events-auto"
+                        className="relative w-40 h-40 md:w-48 md:h-48 pointer-events-auto mt-16 sm:mt-0"
                     >
-                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-black/40 to-black/80"></div>
-                        <div className="absolute inset-0 border border-white/10 rounded-full m-2"></div>
-                        {/* Compass N point */}
-                        <div className="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] font-mono text-amber-500 font-bold z-10 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">N</div>
+                        {/* Moon-seal ring + ink lines */}
+                        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full drop-shadow-[0_0_18px_rgba(220,38,38,0.25)]">
+                            <defs>
+                                <radialGradient id="mvFog" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stopColor="rgba(8,6,10,0.55)" />
+                                    <stop offset="55%" stopColor="rgba(8,6,10,0.72)" />
+                                    <stop offset="100%" stopColor="rgba(4,3,6,0.95)" />
+                                </radialGradient>
+                                <mask id="mvCrescent">
+                                    <rect width="100" height="100" fill="black" />
+                                    <circle cx="50" cy="50" r="26" fill="white" />
+                                    <circle cx="58" cy="44" r="22" fill="black" />
+                                </mask>
+                            </defs>
+                            <circle cx="50" cy="50" r="49" fill="url(#mvFog)" />
+                            <circle cx="50" cy="50" r="26" fill="rgba(220,38,38,0.10)" mask="url(#mvCrescent)" />
+                            <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(220,38,38,0.55)" strokeWidth="1.1" />
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="0.5" />
+                            <line x1="50" y1="3.5" x2="50" y2="9" stroke="rgba(220,38,38,0.9)" strokeWidth="1.2" />
+                            <line x1="50" y1="91" x2="50" y2="95.5" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
+                            <line x1="3.5" y1="50" x2="8" y2="50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
+                            <line x1="92" y1="50" x2="96.5" y2="50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
+                        </svg>
+                        <div className="absolute top-[7px] left-1/2 -translate-x-1/2 text-[9px] font-mono text-red-400 font-bold z-10 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">N</div>
                         
-                        {/* Map entities rendered relative to player - Now Static North Up */}
+                        {/* Entities relative to player - static north-up, sinking into fog at the rim */}
                         <div className="absolute top-1/2 left-1/2 w-full h-full -translate-x-1/2 -translate-y-1/2 z-0">
                             {mapEntities.map((ent, idx) => {
-                                // Scale world coords to minimap coords
-                                const viewRadius = 100; // Increased radius for better overview
-                                const mapRadius = 70; // 70px inside the minimap
-                                
+                                const viewRadius = 60;
+                                const mapRadius = 70;
                                 const rx = ent.x - playerPos.x;
                                 const rz = ent.z - playerPos.z;
-                                
-                                // Check distance
                                 const dist = Math.sqrt(rx*rx + rz*rz);
                                 if (dist > viewRadius) return null;
-                                
-                                // Map coords (center is 0,0). -Z is Forward (Up)
+                                const fog = Math.max(0.15, 1 - (dist / viewRadius) * 0.85);
                                 const mx = (rx / viewRadius) * mapRadius;
                                 const mz = (rz / viewRadius) * mapRadius;
                                 
                                 let blipColor = 'bg-white';
                                 let blipScale = 'w-1.5 h-1.5';
+                                let blipShape = 'rounded-full';
                                 if (ent.type === 'demon' || ent.type === 'boss') {
-                                    blipColor = 'bg-red-500 shadow-[0_0_8px_rgba(255,0,0,1)] z-10 opacity-80';
-                                } else if (ent.type === 'npc' || ent.type === 'slayer') {
-                                    blipColor = 'bg-blue-400 shadow-[0_0_8px_rgba(100,150,255,1)] opacity-70';
+                                    blipColor = 'bg-red-500 shadow-[0_0_8px_rgba(255,30,30,1)] z-10';
+                                    blipScale = 'w-2 h-2';
+                                } else if (ent.type === 'npc' || ent.type === 'warden') {
+                                    blipColor = 'bg-slate-200 shadow-[0_0_6px_rgba(226,232,240,0.9)]';
                                     if (ent.id === 'master') {
-                                        blipColor = 'bg-amber-400 shadow-[0_0_10px_rgba(255,200,0,1)] z-30 scale-125';
+                                        blipColor = 'bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,1)] z-30 scale-125';
                                     }
                                 } else if (ent.type === 'shop') {
-                                    blipColor = 'bg-green-400 shadow-[0_0_8px_rgba(0,255,100,1)] opacity-80';
+                                    blipColor = 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]';
+                                    blipShape = 'rounded-[2px] rotate-45';
                                 } else if (ent.type === 'dummy') {
-                                    blipColor = 'bg-cyan-400 shadow-[0_0_8px_rgba(0,255,255,1)] z-20 animate-pulse';
+                                    blipColor = 'bg-orange-300 shadow-[0_0_8px_rgba(253,186,116,1)] z-20 animate-pulse';
                                 } else if (ent.type === 'cocoon') {
-                                    blipColor = 'bg-purple-500 shadow-[0_0_12px_rgba(180,0,255,1)] saturate-200 animate-pulse z-20 w-2.5 h-2.5';
+                                    blipColor = 'bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,1)] saturate-200 animate-pulse z-20 w-2.5 h-2.5';
                                 }
                                 
                                 return (
                                     <div key={idx} 
-                                         className={`absolute rounded-full -translate-x-1/2 -translate-y-1/2 border border-white/20 transition-all duration-300 ${blipColor} ${blipScale}`} 
-                                         style={{ left: `calc(50% + ${mx}px)`, top: `calc(50% + ${mz}px)` }}
+                                         className={`absolute ${blipShape} -translate-x-1/2 -translate-y-1/2 border border-white/25 transition-all duration-300 ${blipColor} ${blipScale}`} 
+                                         style={{ left: `calc(50% + ${mx}px)`, top: `calc(50% + ${mz}px)`, opacity: fog }}
                                     />
                                 );
                             })}
                         </div>
-                        {/* Player Icon at Center (Rotating) */}
-                        <div className="absolute top-1/2 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 text-white z-20 flex justify-center items-center drop-shadow-[0_0_5px_rgba(187,136,68,1)]"
+                        {/* Player seal at center */}
+                        <div className="absolute top-1/2 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 text-white z-20 flex justify-center items-center drop-shadow-[0_0_6px_rgba(220,38,38,1)]"
                              style={{ transform: `translate(-50%, -50%) rotate(${playerPos.rot + Math.PI}rad)` }}>
-                            <Navigation className="w-4 h-4 fill-white text-amber-500 mb-[2px]" />
+                            <Navigation className="w-4 h-4 fill-white text-red-500 mb-[2px]" />
                         </div>
                     </motion.div>
                 )}
                 </AnimatePresence>
             </div>
         </div>
+        </>
       )}
 
       {/* --- Pause Menu Overlay --- */}
       {menuOpen && gameState === 'playing' && (
          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center">
-            <div className="w-full max-w-md bg-gray-900 border border-white/10 p-5 sm:p-8 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto mx-4">
-               <h2 className="text-2xl font-mono font-bold uppercase tracking-widest text-center mb-8 border-b border-white/10 pb-4">Paused</h2>
-               <div className="space-y-4">
-                  <button onClick={()=>setMenuOpen(false)} className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors flex items-center justify-center gap-2.5 mx-auto">
+            <div className="w-full max-w-md bg-gray-900 border border-white/10 p-5 sm:p-8 [@media(max-height:480px)]:p-3 rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto mx-4">
+               <h2 className="text-2xl [@media(max-height:480px)]:text-lg font-mono font-bold uppercase tracking-widest text-center mb-8 [@media(max-height:480px)]:mb-2 border-b border-white/10 pb-4 [@media(max-height:480px)]:pb-2">Paused</h2>
+               <div className="space-y-4 [@media(max-height:480px)]:space-y-2">
+                  <button onClick={()=>setMenuOpen(false)} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors flex items-center justify-center gap-2.5 mx-auto">
                      <CheckCircle2 className="w-4 h-4 text-green-400" /> Resume Game
                   </button>
-                  <button onClick={saveGameData} className="w-full py-4 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 rounded font-mono uppercase tracking-widest transition-all text-blue-200 flex items-center justify-center gap-2.5 mx-auto">
+                  <button onClick={saveGameData} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 rounded font-mono uppercase tracking-widest transition-all text-blue-200 flex items-center justify-center gap-2.5 mx-auto">
                      <Save className="w-4 h-4 text-blue-400" /> Save Progress
                   </button>
-                  <button onClick={() => { setEnvTime(stateRef.current.envTime); setSettingsOpen(true); }} className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors">Settings</button>
-                  <button onClick={()=>{setMenuOpen(false); setGameState('menu');}} className="w-full py-4 bg-red-900/40 hover:bg-red-900/60 border border-red-500/30 rounded font-mono uppercase tracking-widest transition-colors text-red-200">Abandon Mission</button>
+                  <button onClick={() => { setEnvTime(stateRef.current.envTime); setSettingsOpen(true); }} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-white/5 hover:bg-white/10 border border-white/20 rounded font-mono uppercase tracking-widest transition-colors">Settings</button>
+                  <button onClick={()=>{setMenuOpen(false); setGameState('menu');}} className="w-full py-4 [@media(max-height:480px)]:py-2 [@media(max-height:480px)]:text-xs bg-red-900/40 hover:bg-red-900/60 border border-red-500/30 rounded font-mono uppercase tracking-widest transition-colors text-red-200">Abandon Mission</button>
                </div>
                <div className="mt-8 pt-4 border-t border-white/5 text-center">
                   <p className="text-xs text-gray-500 font-mono tracking-widest uppercase">Rank: {RANKS[rankIndex]}</p>
@@ -5753,6 +6337,19 @@ export const GameWorld: React.FC = () => {
           <div className="flex-1 flex items-center justify-center bg-transparent relative pointer-events-none overflow-hidden">
             {/* Ambient vignette */}
             <div className="absolute inset-0 bg-gradient-radial from-transparent to-black/80 pointer-events-none z-10" />
+
+            {/* Moonweaver Descent: cold cyan grade during the eyes-first beat */}
+            {cutsceneId === 'bossArrival' && cutsceneLineIdx === 2 && (
+                <div className="absolute inset-0 z-20 pointer-events-none" style={{background:'linear-gradient(180deg, rgba(3,14,24,0.78) 0%, rgba(5,24,38,0.62) 55%, rgba(8,6,16,0.80) 100%)'}} />
+            )}
+            {/* Moonweaver Descent: name card on the full reveal */}
+            {cutsceneId === 'bossArrival' && cutsceneLineIdx === 3 && (
+                <div className="absolute inset-x-0 bottom-[20%] z-30 flex flex-col items-center pointer-events-none">
+                    <div className="text-[10px] font-mono tracking-[0.5em] text-red-400/80 uppercase mb-1">The Red Moon's Final Stitch</div>
+                    <div className="text-4xl font-black tracking-[0.18em] text-white" style={{fontFamily:'serif', textShadow:'0 0 18px rgba(255,40,60,0.65)'}}>SHIRA</div>
+                    <div className="text-sm font-mono tracking-[0.35em] text-red-200/90 uppercase mt-1">The Moonweaver</div>
+                </div>
+            )}
             
             {/* Dynamic VFX Layer based on Mood */}
             {(() => {
@@ -5827,12 +6424,12 @@ export const GameWorld: React.FC = () => {
 
       {/* --- Narrator Overlay --- */}
       {dialogId !== null && gameState === 'playing' && !menuOpen && (() => {
-        const isSlayer = dialogId.toLowerCase().includes('slayer');
-        const defaultSpeaker = isSlayer ? 'Demon Slayer Guard' : 'Villager';
-        const defaultText = isSlayer 
-          ? 'Maintain total concentration! Forest demons have been very active lately.' 
-          : 'Thank goodness we have the Demon Slayer Corps protecting our humble village!';
-        const defaultMood = isSlayer ? 'urgent' : 'calm';
+        const isWarden = dialogId.toLowerCase().includes('warden');
+        const defaultSpeaker = isWarden ? 'Order Warden' : 'Villager';
+        const defaultText = isWarden 
+          ? 'Maintain full moon focus! Forest demons have been very active lately.' 
+          : 'Thank goodness we have the Moonflow Order protecting our humble village!';
+        const defaultMood = isWarden ? 'urgent' : 'calm';
 
         const line = (DIALOGUES[dialogId] || [
           { speaker: defaultSpeaker, text: defaultText, mood: defaultMood }
@@ -5913,14 +6510,14 @@ export const GameWorld: React.FC = () => {
           const SHOP_INFO: Record<string, {
               name: string; proprietor: string; item: string; flavor: string; cost: number; upgradeDesc: string;
           }> = {
-              merchant_ramen: { name: "Ramen Stall", proprietor: "Chef Teuchi", item: "Special Chashu Ramen Bowl", flavor: "A warm, slow-simmered pork bone broth with rich miso to replenish physical stamina.", cost: 40, upgradeDesc: "Ramen Attack Buff (+20% strike damage multiplier)" },
+              merchant_ramen: { name: "Noodle Stall", proprietor: "Chef Roku", item: "Special Chashu Noodle Bowl", flavor: "A warm, slow-simmered pork bone broth with rich miso to replenish physical stamina.", cost: 40, upgradeDesc: "Noodle Attack Buff (+20% strike damage multiplier)" },
               merchant_tea: { name: "Tsujiri Tea Parlor", proprietor: "Lady Chiyo", item: "Uji Matcha Dango Combo", flavor: "Organic hand-whipped green tea served with sweet dango mochi sticks.", cost: 35, upgradeDesc: "Instantly fully restores health & permanently awards +20 Max Stamina" },
-              merchant_forge: { name: "Haganezuka's Steel Forge", proprietor: "Haganezuka", item: "Sword Edge Polish", flavor: "Precision grindstone polish using ancestral coal coals to expand steel density.", cost: 60, upgradeDesc: "Nichirin Sharpening (+15% permanent basic basic strike damage)" },
-              merchant_mask: { name: "Traditional Ward-Masks", proprietor: "Master Urokodaki", item: "Dragon Fox Mask", flavor: "A ceremonial fox warding mask imbued with heavy protection runes.", cost: 50, upgradeDesc: "Tengu Critical (Permanent +2.5x critical strike output)" },
-              merchant_sushi: { name: "Sushi Ginza Saku", proprietor: "Saku San", item: "Fatty Otoro Bluefin Sushi", flavor: "Surgical tuna slices that melt on the tongue, feeding breathing flow.", cost: 45, upgradeDesc: "Concentrator Feast (Instantly awards +150 Experience points)" },
+              merchant_forge: { name: "Genta's Steel Forge", proprietor: "Genta", item: "Sword Edge Polish", flavor: "Precision grindstone polish using ancestral coal coals to expand steel density.", cost: 60, upgradeDesc: "Moonsteel Sharpening (+15% permanent basic basic strike damage)" },
+              merchant_mask: { name: "Traditional Ward-Masks", proprietor: "Master Iwato", item: "Dragon Fox Mask", flavor: "A ceremonial fox warding mask imbued with heavy protection runes.", cost: 50, upgradeDesc: "Tengu Critical (Permanent +2.5x critical strike output)" },
+              merchant_sushi: { name: "Sushi Ginza Saku", proprietor: "Saku San", item: "Fatty Otoro Bluefin Sushi", flavor: "Surgical tuna slices that melt on the tongue, feeding the flow.", cost: 45, upgradeDesc: "Concentrator Feast (Instantly awards +150 Experience points)" },
               merchant_umbrella: { name: "Cedar & Silk Parasols", proprietor: "Aoi Chan", item: "Sturdy Umbrella Geta", flavor: "Ancient cedar-wood platform sandals bound by robust weather-proof hemp cords.", cost: 50, upgradeDesc: "Half Stamina cost on every evasive movement dash" },
-              merchant_herbs: { name: "Butterfly Apothecary", proprietor: "Shinobu Kocho", item: "Wisteria Healing Elixir", flavor: "A dynamic purple extract brewed from rare medical wisteria pollen.", cost: 55, upgradeDesc: "Dynamic passive health regeneration (+2.5 Health per second passively)" },
-              merchant_sake: { name: "Mugen Sacred Distillery", proprietor: "Kyojuro", item: "Sacred Slayer Brew", flavor: "Fierce fire-heated sacred sake crafted in high shrines during holy spring.", cost: 75, upgradeDesc: "Flame Breathing Charge (+35% ultimate attack charging speed)" }
+              merchant_herbs: { name: "Moonpetal Apothecary", proprietor: "Ume", item: "Moonpetal Healing Elixir", flavor: "A dynamic purple extract brewed from rare medical moonpetal pollen.", cost: 55, upgradeDesc: "Dynamic passive health regeneration (+2.5 Health per second passively)" },
+              merchant_sake: { name: "Red Moon Distillery", proprietor: "Kiku", item: "Sacred Moon Brew", flavor: "Fierce fire-heated sacred sake crafted in high shrines during holy spring.", cost: 75, upgradeDesc: "Crimson Charge (+35% ultimate attack charging speed)" }
           };
           
           const s = stateRef.current;
@@ -5929,13 +6526,13 @@ export const GameWorld: React.FC = () => {
           let info = { ...SHOP_INFO[activeShop] };
           if (activeShop === 'merchant_forge') {
               if (currentLevel >= 5) {
-                  info.item = "Nichirin Blade Refinement V (MAX)";
-                  info.upgradeDesc = "Nichirin blade polished and refined to ultimate grade power (+125% Slash Damage). Weapon length and elemental trails are maximized.";
+                  info.item = "Moonsteel Blade Refinement V (MAX)";
+                  info.upgradeDesc = "Moonsteel blade polished and refined to ultimate grade power (+125% Slash Damage). Weapon length and elemental trails are maximized.";
                   info.cost = 9999;
               } else {
                   const romanDigits = ["I", "II", "III", "IV", "V"];
-                  info.item = `Nichirin Blade Refinement ${romanDigits[currentLevel]}`;
-                  info.upgradeDesc = `Polish and temper the steel further. Maximizes weapon dimensions, damage (+25% per level), and yields larger breathing particle trails. (Current: level ${currentLevel}/5, Damage: +${currentLevel * 25}%)`;
+                  info.item = `Moonsteel Blade Refinement ${romanDigits[currentLevel]}`;
+                  info.upgradeDesc = `Polish and temper the steel further. Maximizes weapon dimensions, damage (+25% per level), and yields larger spirit particle trails. (Current: level ${currentLevel}/5, Damage: +${currentLevel * 25}%)`;
                   info.cost = 45 + currentLevel * 15;
               }
           }
@@ -5947,8 +6544,8 @@ export const GameWorld: React.FC = () => {
           else if (activeShop === 'merchant_forge') alreadyOwned = currentLevel >= 5;
           else if (activeShop === 'merchant_mask') alreadyOwned = s.critDamageMult > 2.0;
           else if (activeShop === 'merchant_umbrella') alreadyOwned = s.umbrellaGetaActive;
-          else if (activeShop === 'merchant_herbs') alreadyOwned = s.wisteriaHealActive;
-          else if (activeShop === 'merchant_sake') alreadyOwned = s.spiritBreathingMult > 1.0;
+          else if (activeShop === 'merchant_herbs') alreadyOwned = s.moonpetalHealActive;
+          else if (activeShop === 'merchant_sake') alreadyOwned = s.spiritFocusMult > 1.0;
           
           const quest = quests[activeShop];
           
@@ -5980,12 +6577,13 @@ export const GameWorld: React.FC = () => {
                       s.xp -= req;
                       s.level += 1;
                       audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
                       setTipModal({ title: "Level Up / Promotion!", text: `You are now Level ${s.level}!` });
                   }
               }
               else if (activeShop === 'merchant_umbrella') { s.umbrellaGetaActive = true; }
-              else if (activeShop === 'merchant_herbs') { s.wisteriaHealActive = true; }
-              else if (activeShop === 'merchant_sake') { s.spiritBreathingMult = 1.35; }
+              else if (activeShop === 'merchant_herbs') { s.moonpetalHealActive = true; }
+              else if (activeShop === 'merchant_sake') { s.spiritFocusMult = 1.35; }
               
               (audioManager as any).playCrit?.();
               spawnParticlesRef.current?.(s.position, 0xffaa00, 20, 'wind');
@@ -6016,6 +6614,7 @@ export const GameWorld: React.FC = () => {
                       s.xp -= req;
                       s.level += 1;
                       audioManager.playLevelUp();
+          audioManager.playVoice('levelup_voice', { cooldown: 5000 });
                       setTipModal({ title: "Level Up & Promotion!", text: `Congratulations! You climbed to Level ${s.level} and gained stronger stats!` });
                   }
                   
@@ -6105,11 +6704,11 @@ export const GameWorld: React.FC = () => {
                               </div>
                           </div>
 
-                          {/* Right Panel: Hashira Bounty / Quest */}
+                          {/* Right Panel: Eclipse Bounty / Quest */}
                           {quest && (
                               <div className="bg-neutral-950/40 border border-white/5 rounded-xl p-5 flex flex-col justify-between">
                                   <div>
-                                      <h3 className="text-xs tracking-[0.2em] font-mono uppercase text-red-400 mb-3 border-b border-white/5 pb-2">Hashira Bounty Quest</h3>
+                                      <h3 className="text-xs tracking-[0.2em] font-mono uppercase text-red-400 mb-3 border-b border-white/5 pb-2">Eclipse Bounty Quest</h3>
                                       <div className="flex items-start gap-4">
                                           <div className="w-14 h-14 bg-red-950/20 border border-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0 text-red-400">
                                               <Award className="w-8 h-8" />
@@ -6164,7 +6763,7 @@ export const GameWorld: React.FC = () => {
                                               onClick={handleQuestAction}
                                               className="w-full py-3 bg-neutral-800 text-white hover:bg-neutral-700 transition-colors rounded-lg font-mono text-xs uppercase tracking-wider border border-white/10 flex items-center justify-center gap-2 pointer-events-auto"
                                           >
-                                              Enlist Slayer Bounty
+                                              Enlist Warden Bounty
                                           </button>
                                       )}
 
@@ -6206,6 +6805,27 @@ export const GameWorld: React.FC = () => {
       })()}
 
       {/* --- Game Over & Victory States --- */}
+      {gameState === 'opening' && (
+      <OpeningCinematic onFinish={finishOpening} />
+      )}
+
+      {rotateGate && (
+        <div className="absolute inset-0 z-[100] bg-[#050101] flex flex-col items-center justify-center gap-6 p-8 text-center select-none">
+          <style>{`@keyframes cmRotatePhone { 0%,25% { transform: rotate(0deg); } 65%,100% { transform: rotate(90deg); } }`}</style>
+          <div className="relative flex items-center justify-center h-24 w-24">
+            <div className="w-10 h-[68px] border-2 border-red-500 rounded-lg shadow-[0_0_24px_rgba(255,0,0,0.45)]" style={{ animation: 'cmRotatePhone 1.8s ease-in-out infinite' }} />
+          </div>
+          <div className="text-red-500 font-mono text-sm tracking-[0.35em] uppercase font-bold">Rotate to Landscape</div>
+          <p className="text-gray-400 text-xs font-mono tracking-wider max-w-[260px] leading-relaxed">Crimson Moon is meant to be played sideways.</p>
+          <button
+            onClick={(e) => { e.stopPropagation(); switchToLandscape(); }}
+            className="mt-2 px-6 py-3 border border-red-500/60 rounded bg-red-950/60 text-red-200 font-mono text-xs tracking-[0.3em] uppercase active:bg-red-900/70"
+          >
+            Switch to Landscape
+          </button>
+        </div>
+      )}
+
       {gameState === 'gameover' && (() => {
          const penalty = mon >= 5 ? 5 : mon;
          return (
@@ -6215,11 +6835,11 @@ export const GameWorld: React.FC = () => {
                Slain
              </h2>
              <p className="max-w-md text-gray-300 font-sans text-sm md:text-base leading-relaxed tracking-wide mb-8">
-               Your physical shell was shattered. The wisteria blossoms guide your wandering spirit back to safety in the Village.
+               Your physical shell was shattered. The moonpetal blossoms guide your wandering spirit back to safety in the Village.
              </p>
              
              <div className="bg-red-950/50 border border-red-500/20 px-6 py-4 rounded-xl mb-8 font-mono">
-               <div className="text-xs text-red-400 uppercase tracking-widest mb-1 font-bold">Wisteria Preservation</div>
+               <div className="text-xs text-red-400 uppercase tracking-widest mb-1 font-bold">Moonpetal Preservation</div>
                {penalty > 0 ? (
                  <div className="text-sm text-gray-200 flex items-center justify-center gap-1.5 font-bold">
                    <span>Penalty:</span>
@@ -6287,9 +6907,9 @@ export const GameWorld: React.FC = () => {
                 <div><strong className="text-white bg-white/10 px-1 rounded mr-2">SPC</strong> Jump</div>
                 <div><strong className="text-white bg-white/10 px-1 rounded mr-2">J</strong> Strike</div>
                 <div><strong className="text-white bg-white/10 px-1 rounded mr-2">K</strong> Dash <span className="text-gray-500">(15)</span></div>
-                <div><strong className="text-blue-400 bg-blue-900/30 px-1 rounded mr-2">O</strong> Water Wheel <span className="text-gray-500">(30)</span></div>
-                <div><strong className="text-red-400 bg-red-900/30 px-1 rounded mr-2">L</strong> Fire God <span className="text-gray-500">(50)</span></div>
-                <div className="col-span-2"><strong className="text-amber-400 bg-amber-950/30 px-1 rounded mr-2">U</strong> God Speed <span className="text-gray-500">(40)</span></div>
+                <div><strong className="text-blue-400 bg-blue-900/30 px-1 rounded mr-2">O</strong> Riptide <span className="text-gray-500">(30)</span></div>
+                <div><strong className="text-red-400 bg-red-900/30 px-1 rounded mr-2">L</strong> Blood Moon Dance <span className="text-gray-500">(50)</span></div>
+                <div className="col-span-2"><strong className="text-amber-400 bg-amber-950/30 px-1 rounded mr-2">U</strong> Stormstep <span className="text-gray-500">(40)</span></div>
                 <div className="col-span-2 pt-2 border-t border-white/5"><strong className="text-yellow-400 bg-yellow-900/30 px-1 rounded mr-2">E</strong> Interact</div>
             </div>
          </div>
