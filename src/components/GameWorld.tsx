@@ -312,8 +312,9 @@ export const GameWorld: React.FC = () => {
   const [selectedChoiceReply, setSelectedChoiceReply] = useState<string | null>(null);
   const [showQuests, setShowQuests] = useState(true);
   const [openMapLabels, setOpenMapLabels] = useState(false);
-  const [playerPos, setPlayerPos] = useState({ x: 0, z: 0, rot: 0 });
+  const [playerPos, setPlayerPos] = useState<{x:number;z:number;rot:number;yaw:number}>({ x: 0, z: 0, rot: 0, yaw: 0 });
   const [mapEntities, setMapEntities] = useState<any[]>([]);
+  const [nearPrompt, setNearPrompt] = useState<string | null>(null);
   
   // Cutscene Cinematic States
   const [cutsceneId, setCutsceneId] = useState<string | null>(null);
@@ -462,7 +463,7 @@ export const GameWorld: React.FC = () => {
     rotation: 0,
     isOnFloor: false,
     
-    input: { x: 0, y: 0, jump: false, interact: false, attack: false, dash: false, skill1: false, skill2: false, skill3: false },
+    input: { x: 0, y: 0, lookDX: 0, lookDY: 0, jump: false, interact: false, attack: false, dash: false, skill1: false, skill2: false, skill3: false },
     activeDialog: null as string | null,
     
     // Cutscenes & Storyline Progressions
@@ -512,6 +513,7 @@ export const GameWorld: React.FC = () => {
     isBlocking: false, blockTimer: 0,
     hitStopTimer: 0,
     shakeTrauma: 0,
+    camYaw: 0, camPitch: 0.52, camYawS: 0, camPitchS: 0.52, attackBuf: 0,
     ghostTrails: [] as {pos: THREE.Vector3, rot: number, life: number}[],
     
     // NPC / Entity Interactions
@@ -2959,6 +2961,11 @@ export const GameWorld: React.FC = () => {
     };
     const ku = (e: KeyboardEvent) => keys[e.key.toLowerCase()] = false;
     window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
+    let rDrag = false;
+    const pdn = (e: PointerEvent) => { if (e.pointerType === 'mouse' && e.button === 2) rDrag = true; };
+    const pup = () => { rDrag = false; };
+    const pmv = (e: PointerEvent) => { if (rDrag && e.pointerType === 'mouse') { stateRef.current.input.lookDX += e.movementX; stateRef.current.input.lookDY += e.movementY; } };
+    window.addEventListener('pointerdown', pdn); window.addEventListener('pointerup', pup); window.addEventListener('pointermove', pmv);
 
     // ----- Main Game Loop -----
     let lastTime = performance.now();
@@ -3035,6 +3042,12 @@ export const GameWorld: React.FC = () => {
         if (keys['a'] || keys['arrowleft']) moveX -= 1;
         if (keys['d'] || keys['arrowright']) moveX += 1;
         if (s.input.x !== 0 || s.input.y !== 0) { moveX = s.input.x; moveZ = s.input.y; }
+        if (moveX !== 0 || moveZ !== 0) {
+            const cy = Math.cos(s.camYawS), sy = Math.sin(s.camYawS);
+            const rx = moveX * cy + moveZ * sy;
+            const rz = -moveX * sy + moveZ * cy;
+            moveX = rx; moveZ = rz;
+        }
 
         if ((keys[' '] || s.input.jump) && s.isOnFloor && !s.isAttacking && !s.isDashing) {
           s.velocity.y = 12; s.isOnFloor = false;
@@ -3045,8 +3058,9 @@ export const GameWorld: React.FC = () => {
             let closestDir = null;
             let closestDist = 20;
             s.enemies.forEach(e => {
-                if (!e.active || e.type === 'dummy' || e.type === 'npc') return;
+                if (!e.active || e.type === 'npc') return;
                 const dist = s.position.distanceTo(e.group.position);
+                if (e.type === 'dummy' && dist > 7) return;
                 if (dist < closestDist) {
                    closestDist = dist;
                    closestDir = e.group.position.clone().sub(s.position).normalize();
@@ -3057,7 +3071,9 @@ export const GameWorld: React.FC = () => {
             }
         };
 
-        const attackReq = keys['j'] || s.input.attack;
+        const attackReq = keys['j'] || s.input.attack || s.attackBuf > 0;
+        if (s.attackBuf > 0) s.attackBuf -= delta;
+        if ((keys['j'] || s.input.attack) && s.isAttacking && !(s.attackPhase < 3 && s.comboWindow > 0)) s.attackBuf = 0.3;
         if (attackReq && (!s.isAttacking || (s.attackPhase < 3 && s.comboWindow > 0)) && !s.isDashing) {
             autoTarget();
             s.stats.attacks++;
@@ -3066,7 +3082,7 @@ export const GameWorld: React.FC = () => {
             s.attackTimer = 0; s.attackType = 'normal'; s.comboWindow = 0;
             audioManager.playSlash();
             audioManager.playVoiceRandom(['atk_kiai_1','atk_kiai_2','atk_kiai_3'], { chance: 0.55, cooldown: 400 });
-            keys['j'] = false; s.input.attack = false; // consume trigger
+            keys['j'] = false; s.input.attack = false; s.attackBuf = 0; // consume trigger
         }
         
         if ((keys['o'] || s.input.skill1) && !s.isAttacking && !s.isDashing && s.stamina >= 30) {
@@ -3509,7 +3525,7 @@ export const GameWorld: React.FC = () => {
                   
                   slashMesh.scale.set(1.5, 1.5, 1.5);
               }
-              if (s.attackTimer > 0.05 && s.attackTimer < 0.15) {
+              if (s.attackTimer > 0.03 && s.attackTimer < 0.22) {
                   damageActive = true;
               }
               if (s.attackTimer >= 0.25) { s.comboWindow = 0.3; s.isAttacking = false; }
@@ -3606,12 +3622,12 @@ export const GameWorld: React.FC = () => {
             s.enemies.forEach(e => {
                 if (!e.active || e.damageTimer > 0 || e.type==='npc') return;
                 const dToEnemy = s.position.distanceTo(e.group.position);
-                if (dToEnemy < range) {
+                if (dToEnemy < range + (e.type === 'dummy' ? 1.3 : 0)) {
                     let hitBoxValid = true;
-                    if (s.attackType === 'normal') {
+                    if (s.attackType === 'normal' && e.type !== 'dummy') {
                         const dirE = e.group.position.clone().sub(s.position).normalize();
                         const pFwd = new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0), s.rotation);
-                        if (dirE.dot(pFwd) < 0.4) hitBoxValid = false;
+                        if (dirE.dot(pFwd) < 0.2) hitBoxValid = false;
                     }
                     if (hitBoxValid) {
                         // Tactical Check: Is the boss shielded by cocoons?
@@ -3638,7 +3654,7 @@ export const GameWorld: React.FC = () => {
                         } else {
                             e.health -= dmg;
                         }
-                        e.damageTimer = 0.4;
+                        e.damageTimer = e.id === 'dummy' ? 0.1 : 0.4;
                         s.hitStreak++; s.hitStreakTimer = 3.0;
                         if (s.questsProgress) {
                             s.questsProgress.damageDealt = (s.questsProgress.damageDealt || 0) + dmg;
@@ -4276,8 +4292,17 @@ export const GameWorld: React.FC = () => {
          setPlayerPos({
              x: s.position.x,
              z: s.position.z,
-             rot: s.rotation
-         });
+             rot: s.rotation,
+             yaw: s.camYawS
+         } as any);
+         {
+             let pr: string | null = null;
+             if (s.stage === 'village' && s.nearestInteractableId && s.nearestInteractableDist < 4.0) {
+                 const id = s.nearestInteractableId as string;
+                 pr = id === 'master' ? 'Talk to Master Iwato' : id.startsWith('merchant_') ? 'Open shop' : 'Talk';
+             }
+             setNearPrompt(prev => prev === pr ? prev : pr);
+         }
 
          // Sync Dummy Hits
          if (s.dummyHits !== undefined) {
@@ -4580,8 +4605,17 @@ export const GameWorld: React.FC = () => {
       // fixed-axis control mapping are unchanged. Middle distance: tight enough to
       // feel intimate, far enough that the obstruction clamp still has room to work
       // in the dense forest (verified at phone viewport).
-      const tCamPos = s.position.clone().add(new THREE.Vector3(0.8, 6.5, 11));
-      if (s.attackType === 'fire' && s.isAttacking) tCamPos.z += 4; // zoom out for big skill
+      if (!s.activeCutscene) {
+          s.camYaw -= s.input.lookDX * 0.0042; s.camPitch = Math.min(0.95, Math.max(0.2, s.camPitch + s.input.lookDY * 0.0028));
+          s.input.lookDX = 0; s.input.lookDY = 0;
+      }
+      { const k = 1 - Math.exp(-14 * (delta > 0 ? delta : 0.016)); s.camYawS += (s.camYaw - s.camYawS) * k; s.camPitchS += (s.camPitch - s.camPitchS) * k; }
+      const camDist = 12.8 + ((s.attackType === 'fire' && s.isAttacking) ? 3 : 0);
+      const cyw = s.camYawS, cpt = s.camPitchS;
+      const tCamPos = s.position.clone().add(new THREE.Vector3(
+          Math.sin(cyw) * Math.cos(cpt) * camDist + Math.cos(cyw) * 0.8,
+          Math.sin(cpt) * camDist,
+          Math.cos(cyw) * Math.cos(cpt) * camDist - Math.sin(cyw) * 0.8));
       
       let shakeOffsetX = 0;
       let shakeOffsetY = 0;
@@ -4866,16 +4900,16 @@ export const GameWorld: React.FC = () => {
       let targetFov = 60;
       if (s.isAttacking && (s.attackType === 'fire' || s.attackType === 'water')) {
           if (s.attackTimer < 0.1) {
-              targetFov = 90; // sudden wide kick outward
+              targetFov = 66; // gentle wide kick
           } else {
-              targetFov = 50; // sharp zoom in
+              targetFov = 57; // soft zoom in
           }
       } else if (s.isDashing) {
-          targetFov = 75; // zoom out on dash
+          targetFov = 67; // zoom out on dash
       } else if (s.hitStopTimer > 0) {
-          targetFov = 50; // zoom in on hit
+          targetFov = 57; // zoom in on hit
       }
-      camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, 12.0 * delta);
+      camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, Math.min(1, 6.0 * delta));
       camera.updateProjectionMatrix();
 
       // Dynamic Environment (Time of Day & Weather)
@@ -6128,7 +6162,7 @@ export const GameWorld: React.FC = () => {
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="relative w-40 h-40 md:w-48 md:h-48 pointer-events-auto mt-16 sm:mt-0"
+                        className="relative w-40 h-40 md:w-48 md:h-48 [@media(max-height:480px)]:w-[104px] [@media(max-height:480px)]:h-[104px] pointer-events-auto mt-16 sm:mt-0 [@media(max-height:480px)]:mt-0 [@media(max-height:480px)]:fixed [@media(max-height:480px)]:top-2 [@media(max-height:480px)]:right-[112px]"
                     >
                         {/* Moon-seal ring + ink lines */}
                         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full drop-shadow-[0_0_18px_rgba(220,38,38,0.25)]">
@@ -6153,60 +6187,76 @@ export const GameWorld: React.FC = () => {
                             <line x1="3.5" y1="50" x2="8" y2="50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
                             <line x1="92" y1="50" x2="96.5" y2="50" stroke="rgba(255,255,255,0.25)" strokeWidth="0.7" />
                         </svg>
-                        <div className="absolute top-[7px] left-1/2 -translate-x-1/2 text-[9px] font-mono text-red-400 font-bold z-10 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">N</div>
-                        
-                        {/* Entities relative to player - static north-up, sinking into fog at the rim */}
-                        <div className="absolute top-1/2 left-1/2 w-full h-full -translate-x-1/2 -translate-y-1/2 z-0">
-                            {mapEntities.map((ent, idx) => {
-                                const viewRadius = 60;
-                                const mapRadius = 70;
-                                const rx = ent.x - playerPos.x;
-                                const rz = ent.z - playerPos.z;
-                                const dist = Math.sqrt(rx*rx + rz*rz);
-                                if (dist > viewRadius) return null;
-                                const fog = Math.max(0.15, 1 - (dist / viewRadius) * 0.85);
-                                const mx = (rx / viewRadius) * mapRadius;
-                                const mz = (rz / viewRadius) * mapRadius;
-                                
-                                let blipColor = 'bg-white';
-                                let blipScale = 'w-1.5 h-1.5';
-                                let blipShape = 'rounded-full';
-                                if (ent.type === 'demon' || ent.type === 'boss') {
-                                    blipColor = 'bg-red-500 shadow-[0_0_8px_rgba(255,30,30,1)] z-10';
-                                    blipScale = 'w-2 h-2';
-                                } else if (ent.type === 'npc' || ent.type === 'warden') {
-                                    blipColor = 'bg-slate-200 shadow-[0_0_6px_rgba(226,232,240,0.9)]';
-                                    if (ent.id === 'master') {
-                                        blipColor = 'bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,1)] z-30 scale-125';
-                                    }
-                                } else if (ent.type === 'shop') {
-                                    blipColor = 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,1)]';
-                                    blipShape = 'rounded-[2px] rotate-45';
-                                } else if (ent.type === 'dummy') {
-                                    blipColor = 'bg-orange-300 shadow-[0_0_8px_rgba(253,186,116,1)] z-20 animate-pulse';
-                                } else if (ent.type === 'cocoon') {
-                                    blipColor = 'bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,1)] saturate-200 animate-pulse z-20 w-2.5 h-2.5';
-                                }
-                                
-                                return (
-                                    <div key={idx} 
-                                         className={`absolute ${blipShape} -translate-x-1/2 -translate-y-1/2 border border-white/25 transition-all duration-300 ${blipColor} ${blipScale}`} 
-                                         style={{ left: `calc(50% + ${mx}px)`, top: `calc(50% + ${mz}px)`, opacity: fog }}
-                                    />
-                                );
-                            })}
-                        </div>
-                        {/* Player seal at center */}
-                        <div className="absolute top-1/2 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 text-white z-20 flex justify-center items-center drop-shadow-[0_0_6px_rgba(220,38,38,1)]"
-                             style={{ transform: `translate(-50%, -50%) rotate(${playerPos.rot + Math.PI}rad)` }}>
-                            <Navigation className="w-4 h-4 fill-white text-red-500 mb-[2px]" />
-                        </div>
+                        {(() => {
+                            const yaw = playerPos.yaw || 0;
+                            const cy = Math.cos(yaw), sy = Math.sin(yaw);
+                            const viewRadius = 60;
+                            const R = 44; // percent of box
+                            const toMap = (wx: number, wz: number) => {
+                                const rx = wx - playerPos.x, rz = wz - playerPos.z;
+                                const sx = rx * cy - rz * sy;   // screen right
+                                const sd = rx * sy + rz * cy;   // screen down (camera-forward is up)
+                                return { sx, sd, dist: Math.sqrt(rx * rx + rz * rz) };
+                            };
+                            const north = { x: Math.sin(yaw) * 40, y: -Math.cos(yaw) * 40 };
+                            const objective = mapEntities.find((e: any) => stateRef.current.stage === 'village' && (dummyHits >= 3 ? e.id === 'master' : e.type === 'dummy'));
+                            const facing = Math.PI - ((playerPos.rot || 0) - yaw);
+                            return (
+                              <>
+                                <div className="absolute z-10 text-[9px] font-mono font-bold text-red-400 drop-shadow-[0_0_3px_rgba(0,0,0,1)]"
+                                     style={{ left: `${50 + north.x}%`, top: `${50 + north.y}%`, transform: 'translate(-50%,-50%)' }}>N</div>
+                                <div className="absolute inset-0 z-0">
+                                    {mapEntities.map((ent: any, idx: number) => {
+                                        const m = toMap(ent.x, ent.z);
+                                        const isObj = objective && ent === objective;
+                                        if (m.dist > viewRadius && !isObj) return null;
+                                        let k = Math.min(m.dist / viewRadius, 1);
+                                        let px = 50 + (m.sx / viewRadius) * R, py = 50 + (m.sd / viewRadius) * R;
+                                        if (m.dist > viewRadius) { const a = Math.atan2(m.sd, m.sx); px = 50 + Math.cos(a) * R; py = 50 + Math.sin(a) * R; }
+                                        const fog = Math.max(0.2, 1 - k * 0.8);
+                                        let col = '#e2e8f0', size = 6, shape = '50%';
+                                        if (ent.type === 'demon' || ent.type === 'boss') { col = '#ef4444'; size = 7; }
+                                        else if (ent.type === 'shop') { col = '#34d399'; shape = '2px'; }
+                                        else if (ent.type === 'cocoon') { col = '#a855f7'; size = 9; }
+                                        else if (ent.type === 'dummy') { col = '#fdba74'; }
+                                        if (ent.id === 'master') { col = '#fcd34d'; size = 8; }
+                                        return (
+                                          <div key={idx} className={isObj ? 'animate-pulse' : ''}
+                                               style={{ position: 'absolute', left: `${px}%`, top: `${py}%`, width: isObj ? 11 : size, height: isObj ? 11 : size,
+                                                        transform: `translate(-50%,-50%)${shape === '2px' ? ' rotate(45deg)' : ''}`, background: col, borderRadius: shape,
+                                                        border: isObj ? '2px solid #fff' : '1px solid rgba(255,255,255,0.35)', boxShadow: `0 0 ${isObj ? 10 : 6}px ${col}`, opacity: isObj ? 1 : fog, zIndex: isObj ? 25 : 10 }} />
+                                        );
+                                    })}
+                                </div>
+                                {/* View cone + player arrow */}
+                                <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full z-20 pointer-events-none">
+                                    <g transform={`rotate(${(facing * 180) / Math.PI} 50 50)`}>
+                                        <path d="M50 50 L38 22 A32 32 0 0 1 62 22 Z" fill="rgba(255,255,255,0.10)" />
+                                        <path d="M50 41 L55 56 L50 53 L45 56 Z" fill="#fff" stroke="#dc2626" strokeWidth="1.2" strokeLinejoin="round" />
+                                    </g>
+                                </svg>
+                                {objective && (() => { const m = toMap((objective as any).x, (objective as any).z); return (
+                                    <div className="absolute left-1/2 bottom-[14%] -translate-x-1/2 whitespace-nowrap [@media(max-height:480px)]:text-[7px] text-[9px] font-mono text-amber-300 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">
+                                        {(objective as any).id === 'master' ? 'Master Iwato' : 'Training dummy'} · {Math.round(m.dist)}m
+                                    </div>); })()}
+                              </>
+                            );
+                        })()}
                     </motion.div>
                 )}
                 </AnimatePresence>
             </div>
         </div>
         </>
+      )}
+
+      {nearPrompt && gameState === 'playing' && dialogId === null && !menuOpen && cutsceneId === null && (
+        <button
+          className="absolute left-1/2 -translate-x-1/2 bottom-24 sm:bottom-28 z-40 px-5 py-2.5 rounded-full bg-amber-400/90 text-black font-mono text-xs font-bold tracking-wider shadow-[0_0_18px_rgba(251,191,36,0.6)] animate-pulse touch-none"
+          onPointerDown={(e) => { e.preventDefault(); stateRef.current.input.interact = true; setTimeout(() => { stateRef.current.input.interact = false; }, 120); }}
+        >
+          {nearPrompt} <span className="opacity-60 ml-1 hidden sm:inline">[E]</span>
+        </button>
       )}
 
       {/* --- Pause Menu Overlay --- */}
@@ -6896,6 +6946,7 @@ export const GameWorld: React.FC = () => {
             onSkill1={(pressed) => { stateRef.current.input.skill1 = pressed; }}
             onSkill2={(pressed) => { stateRef.current.input.skill2 = pressed; }}
             onSkill3={(pressed) => { stateRef.current.input.skill3 = pressed; }}
+            onLook={(dx, dy) => { stateRef.current.input.lookDX += dx; stateRef.current.input.lookDY += dy; }}
         />
       )}
       
