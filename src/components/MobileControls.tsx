@@ -15,12 +15,15 @@ interface MobileControlsProps {
   onSkill1: (isPressed: boolean) => void;
   onSkill2: (isPressed: boolean) => void;
   onSkill3: (isPressed: boolean) => void;
+  onLook: (dx: number, dy: number) => void;
 }
 
 export const MobileControls: React.FC<MobileControlsProps> = ({ 
-  onMove, onJump, onInteract, onAttack, onDash, onSkill1, onSkill2, onSkill3 
+  onMove, onJump, onInteract, onAttack, onDash, onSkill1, onSkill2, onSkill3, onLook 
 }) => {
   const joystickRef = useRef<HTMLDivElement>(null);
+  const lookId = useRef<number | null>(null);
+  const lastLook = useRef({ x: 0, y: 0 });
   const [joystickActive, setJoystickActive] = useState(false);
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
   const [joystickOrigin, setJoystickOrigin] = useState({ x: 0, y: 0 });
@@ -76,6 +79,15 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
+      {/* Right-half look pad: drag with the free thumb to orbit the camera */}
+      <div
+        className="absolute top-14 bottom-12 right-0 w-1/2 pointer-events-auto touch-none"
+        onPointerDown={(e) => { lookId.current = e.pointerId; lastLook.current = { x: e.clientX, y: e.clientY }; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); }}
+        onPointerMove={(e) => { if (lookId.current !== e.pointerId) return; onLook(e.clientX - lastLook.current.x, e.clientY - lastLook.current.y); lastLook.current = { x: e.clientX, y: e.clientY }; }}
+        onPointerUp={(e) => { if (lookId.current === e.pointerId) lookId.current = null; }}
+        onPointerCancel={(e) => { if (lookId.current === e.pointerId) lookId.current = null; }}
+        onContextMenu={(e) => e.preventDefault()}
+      />
       
       {/* Left side: Joystick */}
       <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 [@media(max-height:480px)]:bottom-3 [@media(max-height:480px)]:left-3 [@media(max-height:480px)]:scale-[0.7] flex justify-start items-end pointer-events-auto origin-bottom-left">
@@ -103,8 +115,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <button
             className="absolute top-0 left-0 w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500/40 active:bg-emerald-500/80 border border-emerald-400 rounded-full shadow-xl backdrop-blur-md flex flex-col items-center justify-center text-white pointer-events-auto touch-none select-none [-webkit-touch-callout:none] active:scale-95 transition-transform"
             onPointerDown={() => onDash(true)}
-            onPointerUp={() => onDash(false)}
-            onPointerLeave={() => onDash(false)}
+            onPointerUp={() => setTimeout(() => onDash(false), 110)}
             onPointerCancel={() => onDash(false)}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -115,8 +126,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <button
             className="absolute top-0 right-4 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-blue-600/60 active:bg-blue-500 border border-blue-400 rounded-full shadow-[0_0_15px_rgba(0,100,255,0.5)] backdrop-blur-md flex flex-col items-center justify-center text-white pointer-events-auto touch-none select-none [-webkit-touch-callout:none] active:scale-95 transition-transform"
             onPointerDown={() => onSkill1(true)}
-            onPointerUp={() => onSkill1(false)}
-            onPointerLeave={() => onSkill1(false)}
+            onPointerUp={() => setTimeout(() => onSkill1(false), 110)}
             onPointerCancel={() => onSkill1(false)}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -127,8 +137,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <button
             className="absolute top-4 right-[4.5rem] sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-amber-500/60 active:bg-amber-400 border border-amber-400 rounded-full shadow-[0_0_15px_rgba(255,200,0,0.5)] backdrop-blur-md flex flex-col items-center justify-center text-white pointer-events-auto touch-none select-none [-webkit-touch-callout:none] active:scale-95 transition-transform"
             onPointerDown={() => onSkill3(true)}
-            onPointerUp={() => onSkill3(false)}
-            onPointerLeave={() => onSkill3(false)}
+            onPointerUp={() => setTimeout(() => onSkill3(false), 110)}
             onPointerCancel={() => onSkill3(false)}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -139,8 +148,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <button
             className="absolute top-14 sm:top-16 -right-2 sm:-right-4 w-14 h-14 sm:w-16 sm:h-16 bg-red-600/70 active:bg-red-500 border border-red-500 rounded-full shadow-[0_0_20px_rgba(255,50,0,0.6)] backdrop-blur-md flex flex-col items-center justify-center text-white pointer-events-auto touch-none select-none [-webkit-touch-callout:none] active:scale-95 transition-transform"
             onPointerDown={() => onSkill2(true)}
-            onPointerUp={() => onSkill2(false)}
-            onPointerLeave={() => onSkill2(false)}
+            onPointerUp={() => setTimeout(() => onSkill2(false), 110)}
             onPointerCancel={() => onSkill2(false)}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -151,8 +159,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <button
             className="absolute bottom-10 sm:bottom-12 left-6 sm:left-8 w-14 h-14 sm:w-16 sm:h-16 bg-slate-200/40 active:bg-white/80 border border-white/60 rounded-full shadow-xl backdrop-blur-md flex flex-col items-center justify-center text-white pointer-events-auto touch-none select-none [-webkit-touch-callout:none] active:scale-95 transition-transform"
             onPointerDown={() => onAttack(true)}
-            onPointerUp={() => onAttack(false)}
-            onPointerLeave={() => onAttack(false)}
+            onPointerUp={() => setTimeout(() => onAttack(false), 110)}
             onPointerCancel={() => onAttack(false)}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -163,8 +170,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <button
             className="absolute bottom-0 right-8 sm:right-10 w-12 h-12 sm:w-14 sm:h-14 bg-gray-500/40 active:bg-gray-500/80 border border-gray-400 rounded-full shadow-xl backdrop-blur-md flex flex-col items-center justify-center text-white pointer-events-auto touch-none select-none [-webkit-touch-callout:none] active:scale-95 transition-transform"
             onPointerDown={() => onJump(true)}
-            onPointerUp={() => onJump(false)}
-            onPointerLeave={() => onJump(false)}
+            onPointerUp={() => setTimeout(() => onJump(false), 110)}
             onPointerCancel={() => onJump(false)}
             onContextMenu={(e) => e.preventDefault()}
           >
@@ -175,8 +181,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <button
             className="absolute bottom-0 left-0 w-10 h-10 sm:w-12 sm:h-12 bg-indigo-500/40 active:bg-indigo-500/80 border border-indigo-400 rounded-full shadow-xl backdrop-blur-md flex items-center justify-center text-white pointer-events-auto touch-none select-none [-webkit-touch-callout:none] active:scale-95 transition-transform"
             onPointerDown={() => onInteract(true)}
-            onPointerUp={() => onInteract(false)}
-            onPointerLeave={() => onInteract(false)}
+            onPointerUp={() => setTimeout(() => onInteract(false), 110)}
             onPointerCancel={() => onInteract(false)}
             onContextMenu={(e) => e.preventDefault()}
           >
